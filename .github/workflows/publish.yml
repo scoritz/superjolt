@@ -1,0 +1,119 @@
+name: Release and Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version type or number (patch, minor, major, beta, or specific version like 1.2.3)'
+        required: true
+        default: 'beta'
+        type: choice
+        options:
+          - beta
+          - patch
+          - minor
+          - major
+          - custom
+      custom_version:
+        description: 'Custom version (only used if version type is "custom")'
+        required: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build
+        run: npm run build
+      
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event.inputs.version }}" = "custom" ]; then
+            VERSION_CMD="${{ github.event.inputs.custom_version }}"
+          elif [ "${{ github.event.inputs.version }}" = "beta" ]; then
+            VERSION_CMD="prerelease --preid=beta"
+          else
+            VERSION_CMD="${{ github.event.inputs.version }}"
+          fi
+          
+          # Update version
+          npm version $VERSION_CMD --no-git-tag-version
+          
+          # Get new version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "is_beta=$([[ "$NEW_VERSION" == *"beta"* ]] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+      
+      - name: Create version bump branch and PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create a new branch for the version bump
+          git checkout -b release/v${{ steps.version.outputs.new_version }}
+          git add package.json package-lock.json
+          git commit -m "Release v${{ steps.version.outputs.new_version }}"
+          git push origin release/v${{ steps.version.outputs.new_version }}
+          
+          # Create PR
+          gh pr create \
+            --base main \
+            --head release/v${{ steps.version.outputs.new_version }} \
+            --title "Release v${{ steps.version.outputs.new_version }}" \
+            --body "Automated version bump for release v${{ steps.version.outputs.new_version }}"
+          
+          # Auto-merge the PR (this will work if you have auto-merge enabled)
+          gh pr merge release/v${{ steps.version.outputs.new_version }} \
+            --squash \
+            --delete-branch \
+            --admin
+          
+          # Switch back to main and pull the changes
+          # Wait a moment for GitHub to propagate the merge
+          sleep 10
+          git checkout main
+          git pull origin main
+      
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ steps.version.outputs.is_beta }}" = "true" ]; then
+            gh release create "v${{ steps.version.outputs.new_version }}" \
+              --title "v${{ steps.version.outputs.new_version }}" \
+              --notes "Beta release" \
+              --prerelease
+          else
+            gh release create "v${{ steps.version.outputs.new_version }}" \
+              --title "v${{ steps.version.outputs.new_version }}" \
+              --notes "Release v${{ steps.version.outputs.new_version }}"
+          fi
+      
+      - name: Publish to npm
+        run: |
+          if [ "${{ steps.version.outputs.is_beta }}" = "true" ]; then
+            npm publish --tag beta
+            # Also update latest tag for beta versions
+            npm dist-tag add superjolt@${{ steps.version.outputs.new_version }} latest
+          else
+            npm publish
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}

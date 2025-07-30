@@ -1,0 +1,92 @@
+# Source files (only dist is needed)
+src/
+test/
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test files and coverage
+coverage/
+.nyc_output/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+__tests__/
+jest.config.*
+
+# Build and config files
+tsconfig.json
+tsconfig.build.json
+.eslintrc.*
+.prettierrc.*
+.editorconfig
+nest-cli.json
+webpack.config.*
+rollup.config.*
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+azure-pipelines.yml
+
+# Documentation (README.md is included by default)
+docs/
+CONTRIBUTING.md
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+
+# Development dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build artifacts that shouldn't be published
+*.tsbuildinfo
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist/
+.serverless/
+.fusebox/
+
+# IDE files
+.vs/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+Thumbs.db
+
+# Project specific
+CLAUDE.md
+TODO.md
+NOTES.md
+scripts/
+examples/
+benchmarks/
+.claude/
+
+# Keep only the compiled output
+!dist/
+!package.json
+!package-lock.json
+!README.md
+!LICENSE
+!bin/
