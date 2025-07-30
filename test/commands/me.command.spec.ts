@@ -87,16 +87,27 @@ describe('MeCommand', () => {
       expect(mockApiService.getCurrentUser).toHaveBeenCalledTimes(1);
       expect(tableUtils.createInfoTable).toHaveBeenCalled();
       
-      // Verify all expected calls were made
-      expect(mockTable.push).toHaveBeenCalledTimes(5); // name, email, github, avatar, user id
+      // The first push call has two items: name and email
+      expect(mockTable.push).toHaveBeenCalledTimes(4); // 1st call (name, email), github, avatar, user id
       
-      // Verify specific calls
-      const pushCalls = mockTable.push.mock.calls;
-      expect(pushCalls).toContainEqual(['Name', 'Test User']);
-      expect(pushCalls).toContainEqual(['Email', 'test@example.com']);
-      expect(pushCalls).toContainEqual([
+      // Check the first call had both name and email
+      expect(mockTable.push).toHaveBeenNthCalledWith(1, 
+        ['Name', 'Test User'],
+        ['Email', 'test@example.com']
+      );
+      
+      // Check other calls
+      expect(mockTable.push).toHaveBeenCalledWith([
         'GitHub',
-        expect.stringContaining('@testuser'),
+        '@testuser',
+      ]);
+      expect(mockTable.push).toHaveBeenCalledWith([
+        'Avatar',
+        'https://example.com/avatar.jpg',
+      ]);
+      expect(mockTable.push).toHaveBeenCalledWith([
+        'User ID',
+        'user-123',
       ]);
       
       expect(consoleLogSpy).toHaveBeenCalled();
@@ -223,7 +234,7 @@ describe('MeCommand', () => {
 
       await command.run();
 
-      expect(mockTable.push).toHaveBeenCalledTimes(3); // name, email, user id only (no github or avatar)
+      expect(mockTable.push).toHaveBeenCalledTimes(2); // 1st call (name, email), 2nd call (user id)
       expect(consoleLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('Quick actions'),
       );
