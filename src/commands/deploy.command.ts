@@ -16,6 +16,7 @@ import {
   findProjectRoot,
   readPackageJson,
 } from '../utils/project';
+import { readSuperjoltIgnore, combineIgnorePatterns } from '../utils/ignore';
 import chalk from 'chalk';
 
 interface DeployOptions {
@@ -124,6 +125,24 @@ export class DeployCommand extends AuthenticatedCommand {
 
       console.log(`\n📦 Preparing deployment from: ${chalk.cyan(deployPath)}`);
 
+      // Read .superjoltignore file if it exists
+      const customIgnore = readSuperjoltIgnore(projectRoot || deployPath);
+      if (customIgnore) {
+        console.log(
+          `   ${chalk.dim('Using ignore patterns from:')} ${chalk.cyan('.superjoltignore')}`,
+        );
+        if (options.verbose) {
+          console.log(
+            `   ${chalk.dim('Custom patterns:')} ${customIgnore.patterns.join(', ')}`,
+          );
+        }
+      }
+
+      // Combine default and custom ignore patterns
+      const ignorePatterns = combineIgnorePatterns(
+        customIgnore?.patterns || [],
+      );
+
       // Create a temporary zip file
       const tempZipPath = `/tmp/deploy-${Date.now()}.zip`;
       const output = fs.createWriteStream(tempZipPath);
@@ -139,25 +158,10 @@ export class DeployCommand extends AuthenticatedCommand {
       // Pipe archive data to the file
       archive.pipe(output);
 
-      // Add files to the archive, excluding common patterns
+      // Add files to the archive, excluding patterns from both defaults and .superjoltignore
       archive.glob('**/*', {
         cwd: deployPath,
-        ignore: [
-          '**/node_modules/**',
-          '**/.git/**',
-          '**/dist/**',
-          '**/build/**',
-          '**/.env*',
-          '**/*.log',
-          '**/coverage/**',
-          '**/.nyc_output/**',
-          '**/.next/**',
-          '**/.nuxt/**',
-          '**/.cache/**',
-          '**/tmp/**',
-          '**/temp/**',
-          '**/.superjolt',
-        ],
+        ignore: ignorePatterns,
         dot: true, // Include dot files
       });
 

@@ -116,6 +116,54 @@ The CLI automatically creates a `.superjolt` file in your project root after the
 
 This allows the CLI to determine whether to update an existing deployment or create a new one.
 
+## Deployment Ignore File (.superjoltignore)
+
+You can create a `.superjoltignore` file in your project root to exclude specific files and directories from deployment. This file follows the same syntax as `.gitignore`.
+
+### Default Exclusions
+
+The following patterns are always excluded from deployments:
+- `node_modules/`
+- `.git/`
+- `dist/`
+- `build/`
+- `.env*`
+- `*.log`
+- `coverage/`
+- `.nyc_output/`
+- `.next/`
+- `.nuxt/`
+- `.cache/`
+- `tmp/`
+- `temp/`
+- `.superjolt`
+
+### Custom Exclusions
+
+Create a `.superjoltignore` file to add your own exclusion patterns:
+
+```
+# Ignore test files
+**/*.test.js
+**/*.spec.js
+__tests__/
+
+# Ignore development files
+*.dev.js
+.vscode/
+.idea/
+
+# Ignore specific directories
+docs/
+examples/
+
+# Ignore large assets during development
+videos/
+*.mp4
+```
+
+The patterns in `.superjoltignore` are combined with the default exclusions, so you don't need to repeat them.
+
 ## Port Configuration
 
 When your application is deployed on Superjolt, the server automatically provides the port number through the `PORT` environment variable. Your application should listen on this port to receive incoming requests.
