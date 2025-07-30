@@ -5,6 +5,7 @@
   
   [![npm version](https://badge.fury.io/js/superjolt.svg)](https://www.npmjs.com/package/superjolt)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![codecov](https://codecov.io/gh/scoritz/superjolt/graph/badge.svg)](https://codecov.io/gh/scoritz/superjolt)
   [![Discord](https://img.shields.io/badge/Discord-Join%20Us-7289DA)](https://superjolt.com/discord)
   
   Official command-line interface for [Superjolt](https://superjolt.com) - The fastest way to deploy JavaScript applications.
