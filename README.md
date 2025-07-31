@@ -3,7 +3,8 @@
   
   # Superjolt CLI (Beta)
   
-  [![npm version](https://badge.fury.io/js/superjolt.svg)](https://www.npmjs.com/package/superjolt)
+  [![npm version](https://img.shields.io/npm/v/superjolt.svg)](https://www.npmjs.com/package/superjolt)
+  [![npm downloads](https://img.shields.io/npm/dw/superjolt.svg)](https://www.npmjs.com/package/superjolt)
   [![Tests](https://github.com/scoritz/superjolt/actions/workflows/test.yml/badge.svg)](https://github.com/scoritz/superjolt/actions/workflows/test.yml)
   [![codecov](https://codecov.io/gh/scoritz/superjolt/graph/badge.svg)](https://codecov.io/gh/scoritz/superjolt)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
