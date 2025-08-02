@@ -2,6 +2,7 @@ import { Command } from 'nest-commander';
 import { Injectable } from '@nestjs/common';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { AuthenticatedCommand } from './authenticated.command';
 import { readSuperjoltConfig } from '../utils/project';
 import { createKeyValueTable, truncate } from '../utils/table.utils';
@@ -17,6 +18,7 @@ export class EnvListCommand extends AuthenticatedCommand {
   constructor(
     protected readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -26,23 +28,25 @@ export class EnvListCommand extends AuthenticatedCommand {
       // Get service ID from .superjolt file
       const config = readSuperjoltConfig();
       if (!config?.serviceId) {
-        console.error('No service found. Deploy first with: superjolt deploy');
+        this.logger.error(
+          'No service found. Deploy first with: superjolt deploy',
+        );
         process.exit(1);
       }
 
-      console.log(chalk.dim('Fetching environment variables...\n'));
+      this.logger.log(chalk.dim('Fetching environment variables...\n'));
 
       const envVars = await this.apiService.listEnvVars(config.serviceId);
       const keys = Object.keys(envVars);
 
       if (keys.length === 0) {
-        console.log(chalk.yellow('No environment variables set'));
-        console.log(chalk.dim('\nSet variables with:'));
-        console.log(chalk.cyan('  superjolt env:set KEY=VALUE'));
+        this.logger.log(chalk.yellow('No environment variables set'));
+        this.logger.log(chalk.dim('\nSet variables with:'));
+        this.logger.log(chalk.cyan('  superjolt env:set KEY=VALUE'));
         return;
       }
 
-      console.log(chalk.cyan('Environment Variables:'));
+      this.logger.log(chalk.cyan('Environment Variables:'));
 
       // Create the table
       const table = createKeyValueTable();
@@ -79,26 +83,26 @@ export class EnvListCommand extends AuthenticatedCommand {
         table.push([chalk.bold(key), displayValue]);
       });
 
-      console.log(table.toString());
+      this.logger.log(table.toString());
 
-      console.log(
+      this.logger.log(
         chalk.dim(
           `\n${keys.length} environment variable${keys.length !== 1 ? 's' : ''} set`,
         ),
       );
 
-      console.log(chalk.dim('\nManage variables with:'));
-      console.log(
+      this.logger.log(chalk.dim('\nManage variables with:'));
+      this.logger.log(
         chalk.dim('  superjolt env:set KEY=VALUE    - Set a variable'),
       );
-      console.log(
+      this.logger.log(
         chalk.dim('  superjolt env:unset KEY        - Remove a variable'),
       );
-      console.log(
+      this.logger.log(
         chalk.dim('  superjolt env:push             - Upload from .env file'),
       );
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

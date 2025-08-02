@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MachineRenameCommand } from '../../src/commands/machine-rename.command';
 import { ApiService } from '../../src/services/api.service';
 import { AuthService } from '../../src/services/auth.service';
+import { LoggerService } from '../../src/services/logger.service';
 
 describe('MachineRenameCommand', () => {
   let command: MachineRenameCommand;
@@ -36,6 +37,7 @@ describe('MachineRenameCommand', () => {
           provide: AuthService,
           useValue: mockAuthService,
         },
+        LoggerService,
       ],
     }).compile();
 

@@ -4,6 +4,7 @@ import { ApiService } from '../services/api.service';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '../services/config.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { readSuperjoltConfig } from '../utils/project';
 
 interface LogsOptions {
@@ -22,6 +23,7 @@ export class LogsCommand extends AuthenticatedCommand {
     protected readonly apiService: ApiService,
     private readonly configService: ConfigService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -38,11 +40,13 @@ export class LogsCommand extends AuthenticatedCommand {
         const config = readSuperjoltConfig();
         if (config?.serviceId) {
           serviceId = config.serviceId;
-          console.log(`Using service ID from .superjolt file: ${serviceId}`);
+          this.logger.log(
+            `Using service ID from .superjolt file: ${serviceId}`,
+          );
         } else {
-          console.error('Error: Service ID is required');
-          console.log('Usage: superjolt logs [options] <serviceId>');
-          console.log(
+          this.logger.error('Error: Service ID is required');
+          this.logger.log('Usage: superjolt logs [options] <serviceId>');
+          this.logger.log(
             '\nNo .superjolt file found. Run "superjolt deploy" first or provide a service ID.',
           );
           process.exit(1);
@@ -55,7 +59,7 @@ export class LogsCommand extends AuthenticatedCommand {
         await this.getStaticLogs(serviceId, options.tail || 20);
       }
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }
@@ -82,19 +86,19 @@ export class LogsCommand extends AuthenticatedCommand {
   }
 
   private async getStaticLogs(serviceId: string, tail: number): Promise<void> {
-    console.log(`Fetching last ${tail} lines for service: ${serviceId}...`);
-    console.log('');
+    this.logger.log(`Fetching last ${tail} lines for service: ${serviceId}...`);
+    this.logger.log('');
 
     const response = await this.apiService.getServiceLogs(serviceId, { tail });
 
     // Display the logs
-    console.log(response.logs);
+    this.logger.log(response.logs);
 
     // Display metadata if available
     if (response.metadata) {
-      console.log('');
-      console.log('─'.repeat(80));
-      console.log(
+      this.logger.log('');
+      this.logger.log('─'.repeat(80));
+      this.logger.log(
         `Lines: ${response.metadata.lines}${response.metadata.truncated ? ' (truncated)' : ''}`,
       );
     }
@@ -105,11 +109,11 @@ export class LogsCommand extends AuthenticatedCommand {
     const chalkModule = require('chalk');
     const chalk = chalkModule.default || chalkModule;
 
-    console.log(
+    this.logger.log(
       `Following logs for service: ${serviceId} (showing last ${tail} lines + new logs)...`,
     );
-    console.log('Press Ctrl+C to stop following');
-    console.log('');
+    this.logger.log('Press Ctrl+C to stop following');
+    this.logger.log('');
 
     const apiUrl = this.configService.getApiUrl();
     const token = await this.authService.getToken();
@@ -127,8 +131,8 @@ export class LogsCommand extends AuthenticatedCommand {
 
           switch (logEvent.type) {
             case 'connected':
-              console.log(chalk.blue('📡 Connected to log stream'));
-              console.log('');
+              this.logger.log(chalk.blue('📡 Connected to log stream'));
+              this.logger.log('');
               break;
 
             case 'log':
@@ -139,7 +143,7 @@ export class LogsCommand extends AuthenticatedCommand {
               break;
 
             case 'error':
-              console.error(
+              this.logger.error(
                 chalk.red(`❌ Log stream error: ${logEvent.error}`),
               );
               eventSource.close();
@@ -147,35 +151,35 @@ export class LogsCommand extends AuthenticatedCommand {
               break;
 
             case 'end':
-              console.log('');
-              console.log(chalk.yellow('📡 Log stream ended'));
+              this.logger.log('');
+              this.logger.log(chalk.yellow('📡 Log stream ended'));
               eventSource.close();
               resolve();
               break;
 
             default:
-              console.log(
+              this.logger.log(
                 chalk.gray(
                   `[${logEvent.type}] ${logEvent.message || JSON.stringify(logEvent)}`,
                 ),
               );
           }
         } catch {
-          console.error('Failed to parse log event:', event.data);
+          this.logger.error('Failed to parse log event:', event.data);
         }
       };
 
       eventSource.onerror = () => {
-        console.error('');
-        console.error(chalk.red('❌ Connection to log stream failed'));
+        this.logger.error('');
+        this.logger.error(chalk.red('❌ Connection to log stream failed'));
         eventSource.close();
         reject(new Error('Log stream connection failed'));
       };
 
       // Handle Ctrl+C gracefully
       process.on('SIGINT', () => {
-        console.log('');
-        console.log(chalk.yellow('📡 Stopping log stream...'));
+        this.logger.log('');
+        this.logger.log(chalk.yellow('📡 Stopping log stream...'));
         eventSource.close();
         resolve();
       });

@@ -4,6 +4,7 @@ import { AuthService } from '../../src/services/auth.service';
 import { StorageService } from '../../src/services/storage.service';
 import { ConfigService } from '../../src/services/config.service';
 import * as fs from 'fs';
+import { LoggerService } from '../../src/services/logger.service';
 
 jest.mock('fs');
 jest.mock('../../src/utils/project');
@@ -51,6 +52,7 @@ describe('StatusCommand', () => {
             getBaseUrl: jest.fn(),
           },
         },
+        LoggerService,
       ],
     }).compile();
 

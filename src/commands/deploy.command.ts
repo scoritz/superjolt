@@ -18,6 +18,7 @@ import {
 } from '../utils/project';
 import { readSuperjoltIgnore, combineIgnorePatterns } from '../utils/ignore';
 import chalk from 'chalk';
+import { LoggerService } from '../services/logger.service';
 
 interface DeployOptions {
   path?: string;
@@ -37,6 +38,7 @@ export class DeployCommand extends AuthenticatedCommand {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -60,7 +62,7 @@ export class DeployCommand extends AuthenticatedCommand {
       if (config?.serviceId) {
         serviceId = config.serviceId;
         serviceIdFromConfig = true;
-        console.log(
+        this.logger.log(
           `${chalk.dim('Using service ID from .superjolt file:')} ${chalk.cyan(serviceId)}`,
         );
       }
@@ -75,7 +77,7 @@ export class DeployCommand extends AuthenticatedCommand {
       const packageJson = readPackageJson(projectRoot);
       if (packageJson?.name) {
         serviceName = packageJson.name;
-        console.log(
+        this.logger.log(
           `${chalk.dim('Using service name from package.json:')} ${chalk.cyan(serviceName)}`,
         );
       }
@@ -94,23 +96,25 @@ export class DeployCommand extends AuthenticatedCommand {
       // but warn the user
       if (!resolvedDeployPath.startsWith(currentDir)) {
         if (deployPath === projectRoot && projectRoot) {
-          console.warn(
+          this.logger.warn(
             chalk.yellow('\n⚠️  Warning: Deploying from parent directory:'),
             chalk.cyan(resolvedDeployPath),
           );
-          console.warn(
+          this.logger.warn(
             chalk.yellow(
               '   Use -p option to explicitly specify a different path\n',
             ),
           );
         } else {
-          console.error(
+          this.logger.error(
             chalk.red(
               'Error: Path must be within the current directory or its subdirectories',
             ),
           );
-          console.error(chalk.red(`  Current directory: ${currentDir}`));
-          console.error(chalk.red(`  Requested path: ${resolvedDeployPath}`));
+          this.logger.error(chalk.red(`  Current directory: ${currentDir}`));
+          this.logger.error(
+            chalk.red(`  Requested path: ${resolvedDeployPath}`),
+          );
           process.exit(1);
         }
       }
@@ -119,20 +123,22 @@ export class DeployCommand extends AuthenticatedCommand {
 
       // Validate the path exists
       if (!fs.existsSync(deployPath)) {
-        console.error(`Path does not exist: ${deployPath}`);
+        this.logger.error(`Path does not exist: ${deployPath}`);
         process.exit(1);
       }
 
-      console.log(`\n📦 Preparing deployment from: ${chalk.cyan(deployPath)}`);
+      this.logger.log(
+        `\n📦 Preparing deployment from: ${chalk.cyan(deployPath)}`,
+      );
 
       // Read .superjoltignore file if it exists
       const customIgnore = readSuperjoltIgnore(projectRoot || deployPath);
       if (customIgnore) {
-        console.log(
+        this.logger.log(
           `   ${chalk.dim('Using ignore patterns from:')} ${chalk.cyan('.superjoltignore')}`,
         );
         if (options.verbose) {
-          console.log(
+          this.logger.log(
             `   ${chalk.dim('Custom patterns:')} ${customIgnore.patterns.join(', ')}`,
           );
         }
@@ -184,12 +190,12 @@ export class DeployCommand extends AuthenticatedCommand {
 
       const stats = fs.statSync(tempZipPath);
       const sizeInMB = (stats.size / 1024 / 1024).toFixed(2);
-      console.log(
+      this.logger.log(
         `   ${chalk.green('✓')} Created ${sizeInMB} MB archive (${fileCount} files)`,
       );
 
       if (options.verbose && fileCount < 20) {
-        console.log(chalk.gray('   Files:', files.join(', ')));
+        this.logger.log(chalk.gray('   Files:', files.join(', ')));
       }
 
       // Create form data for multipart upload
@@ -199,7 +205,7 @@ export class DeployCommand extends AuthenticatedCommand {
         contentType: 'application/zip',
       });
 
-      console.log(`\n🚀 Deploying to Superjolt...`);
+      this.logger.log(`\n🚀 Deploying to Superjolt...`);
 
       // Make the API request
       const apiUrl = this.configService.getApiUrl();
@@ -232,7 +238,7 @@ export class DeployCommand extends AuthenticatedCommand {
           data?: { message?: string };
           statusText?: string;
         };
-        console.error(
+        this.logger.error(
           `\n${chalk.red('❌ Deployment failed:')} ${response.data?.message || response.statusText}`,
         );
       } else if (
@@ -241,12 +247,14 @@ export class DeployCommand extends AuthenticatedCommand {
         'request' in error &&
         error.request
       ) {
-        console.error(
+        this.logger.error(
           `\n${chalk.red('❌ Network Error:')} Unable to connect to the API`,
         );
-        console.error(chalk.dim('   Please check your internet connection'));
+        this.logger.error(
+          chalk.dim('   Please check your internet connection'),
+        );
       } else {
-        console.error(
+        this.logger.error(
           `\n${chalk.red('❌ Error:')} ${error instanceof Error ? error.message : String(error)}`,
         );
       }
@@ -363,8 +371,8 @@ export class DeployCommand extends AuthenticatedCommand {
         }>;
       };
       if (responseData.needsSelection) {
-        console.log(`\n${chalk.yellow('🖥️  Multiple machines available')}`);
-        console.log(chalk.dim('Please select a machine to deploy to:\n'));
+        this.logger.log(`\n${chalk.yellow('🖥️  Multiple machines available')}`);
+        this.logger.log(chalk.dim('Please select a machine to deploy to:\n'));
         const machines = responseData.availableMachines || [];
 
         // Display available machines
@@ -376,7 +384,7 @@ export class DeployCommand extends AuthenticatedCommand {
             const status =
               machine.status === 'running' ? chalk.green('●') : chalk.red('○');
             const number = chalk.cyan(`${index + 1}.`);
-            console.log(
+            this.logger.log(
               `  ${number} ${status} ${chalk.bold(machine.id)} ${chalk.dim(`(${machine.name})`)}`,
             );
           },
@@ -400,7 +408,7 @@ export class DeployCommand extends AuthenticatedCommand {
         });
 
         if (selection < 1 || selection > machines.length) {
-          console.error('Invalid selection');
+          this.logger.error('Invalid selection');
           process.exit(1);
         }
 
@@ -409,7 +417,7 @@ export class DeployCommand extends AuthenticatedCommand {
           name: string;
           status?: string;
         };
-        console.log(
+        this.logger.log(
           `\n${chalk.green('✓')} Selected machine: ${chalk.cyan(selectedMachine.id)}`,
         );
 
@@ -445,20 +453,24 @@ export class DeployCommand extends AuthenticatedCommand {
 
       // Show deployment target
       if (serviceName) {
-        console.log(`   ${chalk.dim('Service:')} ${chalk.cyan(serviceName)}`);
+        this.logger.log(
+          `   ${chalk.dim('Service:')} ${chalk.cyan(serviceName)}`,
+        );
       }
 
       if (deployedServiceId || serviceId) {
         const idToShow = deployedServiceId || serviceId;
-        console.log(`   ${chalk.dim('Service ID:')} ${chalk.cyan(idToShow)}`);
+        this.logger.log(
+          `   ${chalk.dim('Service ID:')} ${chalk.cyan(idToShow)}`,
+        );
       } else if (responseMachineId) {
-        console.log(
+        this.logger.log(
           `   ${chalk.dim('Machine:')} ${chalk.cyan(responseMachineId)}`,
         );
       }
 
       if (message && message.includes('created')) {
-        console.log(`   ${chalk.green('✓')} ${message}`);
+        this.logger.log(`   ${chalk.green('✓')} ${message}`);
       }
 
       // Connect to SSE stream - use machineId from response
@@ -524,7 +536,7 @@ export class DeployCommand extends AuthenticatedCommand {
               case 'status':
                 if (progress.stage === 'connected') {
                   hasConnected = true;
-                  console.log(
+                  this.logger.log(
                     `\n${stageIcons['connected'] || ''} Connected to deployment service`,
                   );
                 } else if (progress.stage && progress.stage !== currentStage) {
@@ -549,7 +561,7 @@ export class DeployCommand extends AuthenticatedCommand {
                   const stageName =
                     progress.stage.charAt(0).toUpperCase() +
                     progress.stage.slice(1).replace(/-/g, ' ');
-                  console.log(`\n${icon} ${stageName}...`);
+                  this.logger.log(`\n${icon} ${stageName}...`);
                 }
                 break;
 
@@ -557,8 +569,8 @@ export class DeployCommand extends AuthenticatedCommand {
                 // Handle real-time streaming build output
                 if (progress.data?.buildLog && verbose) {
                   if (!buildOutputStarted) {
-                    console.log('\n' + chalk.gray('Build output:'));
-                    console.log(chalk.gray('─'.repeat(80)));
+                    this.logger.log('\n' + chalk.gray('Build output:'));
+                    this.logger.log(chalk.gray('─'.repeat(80)));
                     buildOutputStarted = true;
                   }
                   // Write chunks directly without newline to preserve formatting
@@ -601,19 +613,19 @@ export class DeployCommand extends AuthenticatedCommand {
                 if (verbose) {
                   if (progress.data?.buildLog && !buildOutputStarted) {
                     // Only show if we didn't stream it already
-                    console.log('\n' + chalk.gray('Build output:'));
-                    console.log(chalk.gray('─'.repeat(80)));
-                    console.log(progress.data.buildLog);
+                    this.logger.log('\n' + chalk.gray('Build output:'));
+                    this.logger.log(chalk.gray('─'.repeat(80)));
+                    this.logger.log(progress.data.buildLog);
                   }
                   if (progress.data?.startupLog) {
-                    console.log('\n' + chalk.gray('Startup logs:'));
-                    console.log(chalk.gray('─'.repeat(80)));
-                    console.log(progress.data.startupLog);
+                    this.logger.log('\n' + chalk.gray('Startup logs:'));
+                    this.logger.log(chalk.gray('─'.repeat(80)));
+                    this.logger.log(progress.data.startupLog);
                   }
                   if (progress.data?.output) {
-                    console.log('\n' + chalk.gray('Output:'));
-                    console.log(chalk.gray('─'.repeat(80)));
-                    console.log(progress.data.output);
+                    this.logger.log('\n' + chalk.gray('Output:'));
+                    this.logger.log(chalk.gray('─'.repeat(80)));
+                    this.logger.log(progress.data.output);
                   }
                 } else {
                   // In non-verbose mode, check for errors in startup logs
@@ -621,7 +633,7 @@ export class DeployCommand extends AuthenticatedCommand {
                     progress.data?.startupLog &&
                     progress.data.startupLog.toLowerCase().includes('error')
                   ) {
-                    console.log(
+                    this.logger.log(
                       '\n' +
                         chalk.yellow(
                           '⚠️  Startup warnings detected. Run with --verbose to see details.',
@@ -643,7 +655,7 @@ export class DeployCommand extends AuthenticatedCommand {
                   // Overwrite spinner with checkmark
                   process.stdout.write(`\b${chalk.green('✓')}\n`);
                 }
-                console.log(
+                this.logger.log(
                   `\n${chalk.green('✅ Deployment completed successfully!')}`,
                 );
 
@@ -654,13 +666,13 @@ export class DeployCommand extends AuthenticatedCommand {
                       { serviceId: deployedServiceId },
                       projectRoot || undefined,
                     );
-                    console.log(
+                    this.logger.log(
                       `   ${chalk.green('✓')} Saved service ID to .superjolt file`,
                     );
                   } catch (error) {
                     const errorMessage =
                       error instanceof Error ? error.message : String(error);
-                    console.warn(
+                    this.logger.warn(
                       chalk.yellow(
                         '⚠️  Could not save .superjolt file:',
                         errorMessage,
@@ -671,11 +683,11 @@ export class DeployCommand extends AuthenticatedCommand {
 
                 // Display the service URL
                 if (serviceUrl) {
-                  console.log(
+                  this.logger.log(
                     '\n' + chalk.cyan('🌐 Your app is now available at:'),
                   );
-                  console.log('   ' + chalk.bold.underline(serviceUrl));
-                  console.log();
+                  this.logger.log('   ' + chalk.bold.underline(serviceUrl));
+                  this.logger.log();
                 }
 
                 isCompleted = true;
@@ -687,11 +699,11 @@ export class DeployCommand extends AuthenticatedCommand {
                 break;
 
               case 'error':
-                console.error(
+                this.logger.error(
                   '\n' + chalk.red(`❌ Deployment failed: ${progress.message}`),
                 );
                 if (progress.data?.error) {
-                  console.error(chalk.red(progress.data.error));
+                  this.logger.error(chalk.red(progress.data.error));
                 }
                 eventSource.close();
 
@@ -701,12 +713,12 @@ export class DeployCommand extends AuthenticatedCommand {
                 break;
 
               default:
-                console.log(
+                this.logger.log(
                   chalk.gray(`[${progress.type}] ${progress.message}`),
                 );
             }
           } catch {
-            console.error('Failed to parse event:', event.data);
+            this.logger.error('Failed to parse event:', event.data);
           }
         };
 
@@ -718,13 +730,13 @@ export class DeployCommand extends AuthenticatedCommand {
 
           // If we connected but then immediately got an error, the deployment likely completed
           if (hasConnected && !isCompleted) {
-            console.log(
+            this.logger.log(
               `\n${chalk.yellow('⚠️  Lost connection to deployment stream')}`,
             );
-            console.log(
+            this.logger.log(
               chalk.dim('   The deployment may have completed successfully'),
             );
-            console.log(
+            this.logger.log(
               chalk.dim(
                 `   Run ${chalk.cyan(`superjolt status`)} to check the service status`,
               ),
@@ -741,14 +753,14 @@ export class DeployCommand extends AuthenticatedCommand {
             return;
           }
 
-          console.error(`\n${chalk.red('❌ Stream connection error')}`);
+          this.logger.error(`\n${chalk.red('❌ Stream connection error')}`);
           if (verbose) {
-            console.error(chalk.dim('Stream URL:'), streamUrl);
+            this.logger.error(chalk.dim('Stream URL:'), streamUrl);
             if (error) {
-              console.error(chalk.dim('Error details:'), error);
+              this.logger.error(chalk.dim('Error details:'), error);
             }
           } else {
-            console.error(
+            this.logger.error(
               chalk.dim('   Run with --verbose to see connection details'),
             );
           }

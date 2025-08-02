@@ -1,6 +1,7 @@
 import { Command } from 'nest-commander';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedCommand } from './authenticated.command';
 
@@ -15,6 +16,7 @@ export class MachineUseCommand extends AuthenticatedCommand {
   constructor(
     private readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -28,7 +30,7 @@ export class MachineUseCommand extends AuthenticatedCommand {
         const machinesResponse = await this.apiService.listMachines();
 
         if (machinesResponse.machines.length === 0) {
-          console.error(
+          this.logger.error(
             'No machines available. Create a machine first with: superjolt machine:create',
           );
           process.exit(1);
@@ -39,7 +41,7 @@ export class MachineUseCommand extends AuthenticatedCommand {
           .getCurrentUser()
           .catch(() => null);
 
-        console.log('\n🖥️  Select a machine to set as default:\n');
+        this.logger.log('\n🖥️  Select a machine to set as default:\n');
 
         // Display available machines
         const chalkModule = require('chalk');
@@ -53,7 +55,7 @@ export class MachineUseCommand extends AuthenticatedCommand {
           const defaultLabel = isCurrentDefault
             ? chalk.gray(' (current default)')
             : '';
-          console.log(
+          this.logger.log(
             `  ${index + 1}. ${status} ${machine.id} (${machine.name})${defaultLabel}`,
           );
         });
@@ -73,19 +75,19 @@ export class MachineUseCommand extends AuthenticatedCommand {
         });
 
         if (selection < 1 || selection > machinesResponse.machines.length) {
-          console.error('Invalid selection');
+          this.logger.error('Invalid selection');
           process.exit(1);
         }
 
         machineId = machinesResponse.machines[selection - 1].id;
       }
 
-      console.log(`\nSetting default machine to: ${machineId}...`);
+      this.logger.log(`\nSetting default machine to: ${machineId}...`);
 
       const response = await this.apiService.setDefaultMachine(machineId);
-      console.log(`✅ ${response.message}`);
+      this.logger.log(`✅ ${response.message}`);
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

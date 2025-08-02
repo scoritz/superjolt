@@ -2,6 +2,7 @@ import { Command, Option } from 'nest-commander';
 import { Injectable } from '@nestjs/common';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { AuthenticatedCommand } from './authenticated.command';
 import * as readline from 'readline';
 
@@ -14,6 +15,7 @@ export class MachineDeleteCommand extends AuthenticatedCommand {
   constructor(
     protected readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -26,7 +28,7 @@ export class MachineDeleteCommand extends AuthenticatedCommand {
       const machineId = options?.id || passedParams[0];
 
       if (!machineId) {
-        console.error(
+        this.logger.error(
           'Error: Machine ID is required. Use --id <machine-id> or provide it as an argument.',
         );
         process.exit(1);
@@ -36,18 +38,18 @@ export class MachineDeleteCommand extends AuthenticatedCommand {
       if (!options?.yes) {
         const confirmed = await this.confirmDeletion(machineId);
         if (!confirmed) {
-          console.log('Deletion cancelled.');
+          this.logger.log('Deletion cancelled.');
           return;
         }
       }
 
-      console.log(`\nDeleting machine ${machineId}...`);
+      this.logger.log(`\nDeleting machine ${machineId}...`);
 
       await this.apiService.deleteMachine(machineId);
 
-      console.log(`\nMachine ${machineId} deleted successfully.`);
+      this.logger.log(`\nMachine ${machineId} deleted successfully.`);
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

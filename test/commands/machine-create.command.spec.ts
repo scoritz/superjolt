@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MachineCreateCommand } from '../../src/commands/machine-create.command';
 import { ApiService } from '../../src/services/api.service';
 import { AuthService } from '../../src/services/auth.service';
+import { LoggerService } from '../../src/services/logger.service';
 
 describe('MachineCreateCommand', () => {
   let command: MachineCreateCommand;
@@ -34,6 +35,7 @@ describe('MachineCreateCommand', () => {
           provide: AuthService,
           useValue: mockAuthService,
         },
+        LoggerService,
       ],
     }).compile();
 

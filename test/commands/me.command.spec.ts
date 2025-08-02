@@ -3,6 +3,7 @@ import { MeCommand } from '../../src/commands/me.command';
 import { ApiService } from '../../src/services/api.service';
 import { AuthService } from '../../src/services/auth.service';
 import * as tableUtils from '../../src/utils/table.utils';
+import { LoggerService } from '../../src/services/logger.service';
 
 jest.mock('../../src/utils/table.utils');
 
@@ -49,6 +50,7 @@ describe('MeCommand', () => {
           provide: AuthService,
           useValue: mockAuthService,
         },
+        LoggerService,
       ],
     }).compile();
 

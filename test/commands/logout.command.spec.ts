@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LogoutCommand } from '../../src/commands/logout.command';
 import { AuthService } from '../../src/services/auth.service';
+import { LoggerService } from '../../src/services/logger.service';
 
 describe('LogoutCommand', () => {
   let command: LogoutCommand;
@@ -22,6 +23,7 @@ describe('LogoutCommand', () => {
           provide: AuthService,
           useValue: mockAuthService,
         },
+        LoggerService,
       ],
     }).compile();
 

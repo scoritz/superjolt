@@ -1,10 +1,12 @@
 import { CommandRunner } from 'nest-commander';
 import { Injectable } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 
 @Injectable()
 export abstract class AuthenticatedCommand extends CommandRunner {
   protected abstract authService: AuthService;
+  protected abstract logger: LoggerService;
 
   async run(...args: unknown[]): Promise<void> {
     // Check if we have a token
@@ -12,7 +14,7 @@ export abstract class AuthenticatedCommand extends CommandRunner {
 
     if (!token) {
       // No token - trigger auth flow
-      console.log('🔐 Authentication required. Starting login flow...\n');
+      this.logger.log('🔐 Authentication required. Starting login flow...\n');
       await this.authService.performOAuthFlow();
     }
 

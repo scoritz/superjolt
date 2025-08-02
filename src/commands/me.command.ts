@@ -1,6 +1,7 @@
 import { Command } from 'nest-commander';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedCommand } from './authenticated.command';
 import { createInfoTable, createProgressBar } from '../utils/table.utils';
@@ -15,6 +16,7 @@ export class MeCommand extends AuthenticatedCommand {
   constructor(
     protected readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -23,7 +25,7 @@ export class MeCommand extends AuthenticatedCommand {
     try {
       const response = await this.apiService.getCurrentUser();
 
-      console.log(chalk.cyan('\n👤 User Profile\n'));
+      this.logger.log(chalk.cyan('\n👤 User Profile\n'));
 
       // User info table
       const userTable = createInfoTable();
@@ -45,11 +47,11 @@ export class MeCommand extends AuthenticatedCommand {
 
       userTable.push([chalk.bold('User ID'), chalk.dim(response.id)]);
 
-      console.log(userTable.toString());
+      this.logger.log(userTable.toString());
 
       // Organization info
       if (response.tenant) {
-        console.log(chalk.cyan('\n🏢 Organization\n'));
+        this.logger.log(chalk.cyan('\n🏢 Organization\n'));
 
         const orgTable = createInfoTable();
         orgTable.push(
@@ -65,18 +67,18 @@ export class MeCommand extends AuthenticatedCommand {
           `${machineCount}/${maxMachines} ${progressBar}`,
         ]);
 
-        console.log(orgTable.toString());
+        this.logger.log(orgTable.toString());
 
         // Show warning if approaching limit
         const percentUsed = (machineCount / maxMachines) * 100;
         if (percentUsed >= 100) {
-          console.log(
+          this.logger.log(
             chalk.red(
               '\n⚠️  Machine limit reached! Delete unused machines to continue.',
             ),
           );
         } else if (percentUsed >= 80) {
-          console.log(
+          this.logger.log(
             chalk.yellow(
               `\n⚠️  Approaching machine limit (${Math.round(percentUsed)}% used)`,
             ),
@@ -86,7 +88,7 @@ export class MeCommand extends AuthenticatedCommand {
 
       // Last used machine
       if (response.lastUsedMachineId) {
-        console.log(
+        this.logger.log(
           chalk.dim(
             `\n📍 Last Used Machine: ${chalk.blue(response.lastUsedMachineId)}`,
           ),
@@ -94,14 +96,16 @@ export class MeCommand extends AuthenticatedCommand {
       }
 
       // Quick actions
-      console.log(chalk.dim('\nQuick actions:'));
-      console.log(chalk.dim('  superjolt machines     - List all machines'));
-      console.log(
+      this.logger.log(chalk.dim('\nQuick actions:'));
+      this.logger.log(
+        chalk.dim('  superjolt machines     - List all machines'),
+      );
+      this.logger.log(
         chalk.dim('  superjolt deploy       - Deploy an application'),
       );
-      console.log(chalk.dim('  superjolt logout       - Sign out'));
+      this.logger.log(chalk.dim('  superjolt logout       - Sign out'));
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

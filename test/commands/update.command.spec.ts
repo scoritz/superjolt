@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UpdateCommand } from '../../src/commands/update.command';
 import { UpdateService } from '../../src/services/update.service';
+import { LoggerService } from '../../src/services/logger.service';
 
 describe('UpdateCommand', () => {
   let command: UpdateCommand;
@@ -22,6 +23,7 @@ describe('UpdateCommand', () => {
           provide: UpdateService,
           useValue: mockUpdateService,
         },
+        LoggerService,
       ],
     }).compile();
 

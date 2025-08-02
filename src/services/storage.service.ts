@@ -47,7 +47,9 @@ export class StorageService {
     if (options.secure && (await this.loadKeytar())) {
       try {
         const value = await this.keytar.getPassword(SERVICE_NAME, key);
-        if (value) return value;
+        if (value) {
+          return value;
+        }
       } catch (error) {
         this.logger.debug(`Failed to get secure value for ${key}:`, error);
       }
@@ -57,7 +59,8 @@ export class StorageService {
     const filePath = this.getFilePath(key);
     if (fs.existsSync(filePath)) {
       try {
-        return fs.readFileSync(filePath, 'utf-8').trim();
+        const content = fs.readFileSync(filePath, 'utf-8').trim();
+        return content;
       } catch (error) {
         this.logger.debug(`Failed to read file for ${key}:`, error);
       }

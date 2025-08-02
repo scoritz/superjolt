@@ -1,6 +1,7 @@
 import { Command } from 'nest-commander';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedCommand } from './authenticated.command';
 import chalk from 'chalk';
@@ -15,6 +16,7 @@ export class MachineRenameCommand extends AuthenticatedCommand {
   constructor(
     protected readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -23,9 +25,11 @@ export class MachineRenameCommand extends AuthenticatedCommand {
     try {
       // Check if no arguments provided
       if (passedParams.length === 0) {
-        console.error('Error: New name is required');
-        console.log('Usage: superjolt machine:rename <machineId> <newName>');
-        console.log(
+        this.logger.error('Error: New name is required');
+        this.logger.log(
+          'Usage: superjolt machine:rename <machineId> <newName>',
+        );
+        this.logger.log(
           '   or: superjolt machine:rename <newName> (uses default machine)',
         );
         process.exit(1);
@@ -38,16 +42,18 @@ export class MachineRenameCommand extends AuthenticatedCommand {
       if (passedParams.length === 1) {
         const currentUser = await this.apiService.getCurrentUser();
         if (!currentUser.lastUsedMachineId) {
-          console.error('Error: No default machine found');
-          console.log('Create a machine first with: superjolt machine:create');
-          console.log(
+          this.logger.error('Error: No default machine found');
+          this.logger.log(
+            'Create a machine first with: superjolt machine:create',
+          );
+          this.logger.log(
             'Or specify machine ID: superjolt machine:rename <machineId> <newName>',
           );
           process.exit(1);
         }
         machineId = currentUser.lastUsedMachineId;
         newName = passedParams[0];
-        console.log(`Using default machine: ${machineId}`);
+        this.logger.log(`Using default machine: ${machineId}`);
       } else {
         // Two parameters: machineId and newName
         machineId = passedParams[0];
@@ -57,24 +63,24 @@ export class MachineRenameCommand extends AuthenticatedCommand {
       // Validate name format (similar to service names)
       const nameRegex = /^[a-z0-9][a-z0-9-._]*$/;
       if (!nameRegex.test(newName)) {
-        console.error(
+        this.logger.error(
           'Error: Machine name must start with a lowercase letter or number, and can only contain lowercase letters, numbers, hyphens, periods, and underscores.',
         );
         process.exit(1);
       }
 
-      console.log(
+      this.logger.log(
         `Renaming machine ${chalk.cyan(machineId)} to ${chalk.cyan(newName)}...`,
       );
 
       const response = await this.apiService.renameMachine(machineId, newName);
 
-      console.log(chalk.green(`✅ ${response.message}`));
-      console.log(
+      this.logger.log(chalk.green(`✅ ${response.message}`));
+      this.logger.log(
         `Machine ${chalk.cyan(machineId)} renamed to ${chalk.cyan(response.name)}`,
       );
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

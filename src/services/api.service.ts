@@ -3,6 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { ConfigService } from './config.service';
 import { AuthService } from './auth.service';
+import { LoggerService } from './logger.service';
 import {
   IApiError,
   ICreateMachineResponse,
@@ -17,6 +18,7 @@ export class ApiService {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
+    private readonly logger: LoggerService,
   ) {}
 
   async createMachine(): Promise<ICreateMachineResponse> {
@@ -205,7 +207,9 @@ export class ApiService {
       return response.data;
     } catch (error: any) {
       // If unauthorized and we haven't retried yet, trigger login
-      if (error.response?.status === 401 && retry) {
+      // But skip this in MCP mode (when logger is silent)
+      const loggerOptions = (this.logger as any).silent;
+      if (error.response?.status === 401 && retry && !loggerOptions) {
         await this.handleUnauthorized();
         // Retry the request once after login
         return this.request<T>(method, path, data, false);
@@ -229,7 +233,9 @@ export class ApiService {
   }
 
   private async handleUnauthorized(): Promise<void> {
-    console.log('\n🔐 Authentication required. Please log in to continue.\n');
+    this.logger.log(
+      '\n🔐 Authentication required. Please log in to continue.\n',
+    );
 
     // Delete any existing invalid token
     await this.authService.deleteToken();

@@ -1,6 +1,7 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { Injectable } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { StorageService } from '../services/storage.service';
 import { ConfigService } from '../services/config.service';
 import chalk from 'chalk';
@@ -22,18 +23,19 @@ export class StatusCommand extends CommandRunner {
     private readonly authService: AuthService,
     private readonly storageService: StorageService,
     private readonly configService: ConfigService,
+    private readonly logger: LoggerService,
   ) {
     super();
   }
 
   async run(): Promise<void> {
-    console.log(chalk.cyan('\n━━━ Superjolt CLI Status ━━━\n'));
+    this.logger.log(chalk.cyan('\n━━━ Superjolt CLI Status ━━━\n'));
 
     // Version Info
     const pkgPath = path.join(__dirname, '..', '..', 'package.json');
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
 
-    console.log(chalk.bold.cyan('🔧 System Information\n'));
+    this.logger.log(chalk.bold.cyan('🔧 System Information\n'));
     const versionTable = createInfoTable();
     versionTable.push(
       [chalk.bold('CLI Version'), chalk.green(pkg.version)],
@@ -44,10 +46,10 @@ export class StatusCommand extends CommandRunner {
       ],
       [chalk.bold('Architecture'), chalk.green(process.arch)],
     );
-    console.log(versionTable.toString());
+    this.logger.log(versionTable.toString());
 
     // API Configuration
-    console.log(chalk.bold.cyan('\n🌐 API Configuration\n'));
+    this.logger.log(chalk.bold.cyan('\n🌐 API Configuration\n'));
     const apiTable = createInfoTable();
     const apiUrl = this.configService.getApiUrl();
     const baseUrl = this.configService.getBaseUrl();
@@ -65,10 +67,10 @@ export class StatusCommand extends CommandRunner {
       ]);
     }
 
-    console.log(apiTable.toString());
+    this.logger.log(apiTable.toString());
 
     // Authentication Status
-    console.log(chalk.bold.cyan('\n🔐 Authentication\n'));
+    this.logger.log(chalk.bold.cyan('\n🔐 Authentication\n'));
     const authTable = createInfoTable();
     const token = await this.authService.getToken();
 
@@ -111,10 +113,10 @@ export class StatusCommand extends CommandRunner {
       );
     }
 
-    console.log(authTable.toString());
+    this.logger.log(authTable.toString());
 
     // Project Configuration
-    console.log(chalk.bold.cyan('\n📁 Project Configuration\n'));
+    this.logger.log(chalk.bold.cyan('\n📁 Project Configuration\n'));
     const projectTable = createInfoTable();
     const projectConfig = readSuperjoltConfig();
 
@@ -133,10 +135,10 @@ export class StatusCommand extends CommandRunner {
       );
     }
 
-    console.log(projectTable.toString());
+    this.logger.log(projectTable.toString());
 
     // Storage Information
-    console.log(chalk.bold.cyan('\n💾 Local Storage\n'));
+    this.logger.log(chalk.bold.cyan('\n💾 Local Storage\n'));
     const storageTable = new Table({
       head: [chalk.bold.cyan('Type'), chalk.bold.cyan('Description')],
       style: { head: [], border: [] },
@@ -191,10 +193,10 @@ export class StatusCommand extends CommandRunner {
       storageTable.push([chalk.dim('Empty'), chalk.dim('No stored data')]);
     }
 
-    console.log(storageTable.toString());
+    this.logger.log(storageTable.toString());
 
     // Environment Variables
-    console.log(chalk.bold.cyan('\n🔧 Environment Variables\n'));
+    this.logger.log(chalk.bold.cyan('\n🔧 Environment Variables\n'));
     const envTable = createInfoTable();
     const envVars = [
       'SUPERJOLT_API_URL',
@@ -218,10 +220,10 @@ export class StatusCommand extends CommandRunner {
       ]);
     }
 
-    console.log(envTable.toString());
+    this.logger.log(envTable.toString());
 
     // Update Status
-    console.log(chalk.bold.cyan('\n🔄 Update Settings\n'));
+    this.logger.log(chalk.bold.cyan('\n🔄 Update Settings\n'));
     const updateTable = createInfoTable();
     const updateCache = await this.storageService.getJson<any>('update-check');
 
@@ -260,8 +262,8 @@ export class StatusCommand extends CommandRunner {
         : chalk.green('Enabled'),
     ]);
 
-    console.log(updateTable.toString());
+    this.logger.log(updateTable.toString());
 
-    console.log(chalk.cyan('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'));
+    this.logger.log(chalk.cyan('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'));
   }
 }

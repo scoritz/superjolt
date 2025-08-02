@@ -2,6 +2,7 @@ import { Command } from 'nest-commander';
 import { Injectable } from '@nestjs/common';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { AuthenticatedCommand } from './authenticated.command';
 
 @Injectable()
@@ -13,21 +14,22 @@ export class MachineCreateCommand extends AuthenticatedCommand {
   constructor(
     protected readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
 
   protected async execute(): Promise<void> {
     try {
-      console.log('Creating machine...');
+      this.logger.log('Creating machine...');
 
       const machine = await this.apiService.createMachine();
 
-      console.log('\nMachine created successfully!');
-      console.log(`ID: ${machine.id}`);
-      console.log(`Name: ${machine.name}`);
+      this.logger.log('\nMachine created successfully!');
+      this.logger.log(`ID: ${machine.id}`);
+      this.logger.log(`Name: ${machine.name}`);
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

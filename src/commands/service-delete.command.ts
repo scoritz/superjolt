@@ -1,6 +1,7 @@
 import { Command } from 'nest-commander';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { Injectable } from '@nestjs/common';
 import { readSuperjoltConfig, deleteSuperjoltConfig } from '../utils/project';
 import { AuthenticatedCommand } from './authenticated.command';
@@ -16,6 +17,7 @@ export class ServiceDeleteCommand extends AuthenticatedCommand {
   constructor(
     private readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -25,9 +27,9 @@ export class ServiceDeleteCommand extends AuthenticatedCommand {
       const serviceId = passedParams[0];
 
       if (!serviceId) {
-        console.error('Error: Service ID is required');
-        console.log('Usage: superjolt service:delete <serviceId>');
-        console.log('   or: superjolt delete <serviceId>');
+        this.logger.error('Error: Service ID is required');
+        this.logger.log('Usage: superjolt service:delete <serviceId>');
+        this.logger.log('   or: superjolt delete <serviceId>');
         process.exit(1);
       }
 
@@ -51,24 +53,24 @@ export class ServiceDeleteCommand extends AuthenticatedCommand {
       });
 
       if (!confirmed) {
-        console.log('Deletion cancelled');
+        this.logger.log('Deletion cancelled');
         return;
       }
 
-      console.log(`Deleting service: ${serviceId}...`);
+      this.logger.log(`Deleting service: ${serviceId}...`);
 
       const response = await this.apiService.deleteService(serviceId);
-      console.log(`✅ ${response.message}`);
+      this.logger.log(`✅ ${response.message}`);
 
       // Check if .superjolt file contains this serviceId
       const config = readSuperjoltConfig();
       if (config?.serviceId === serviceId) {
         if (deleteSuperjoltConfig()) {
-          console.log('✅ Removed .superjolt file (service was deleted)');
+          this.logger.log('✅ Removed .superjolt file (service was deleted)');
         }
       }
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

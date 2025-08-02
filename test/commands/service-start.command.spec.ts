@@ -3,6 +3,7 @@ import { ServiceStartCommand } from '../../src/commands/service-start.command';
 import { ApiService } from '../../src/services/api.service';
 import { AuthService } from '../../src/services/auth.service';
 import * as projectUtils from '../../src/utils/project';
+import { LoggerService } from '../../src/services/logger.service';
 
 jest.mock('../../src/utils/project');
 
@@ -37,6 +38,7 @@ describe('ServiceStartCommand', () => {
           provide: AuthService,
           useValue: mockAuthService,
         },
+        LoggerService,
       ],
     }).compile();
 

@@ -2,6 +2,7 @@ import { Command, Option } from 'nest-commander';
 import { Injectable } from '@nestjs/common';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { AuthenticatedCommand } from './authenticated.command';
 import { readSuperjoltConfig, findProjectRoot } from '../utils/project';
 import * as fs from 'fs';
@@ -20,6 +21,7 @@ export class EnvPushCommand extends AuthenticatedCommand {
   constructor(
     protected readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -32,14 +34,16 @@ export class EnvPushCommand extends AuthenticatedCommand {
       // Get service ID from .superjolt file
       const config = readSuperjoltConfig();
       if (!config?.serviceId) {
-        console.error('No service found. Deploy first with: superjolt deploy');
+        this.logger.error(
+          'No service found. Deploy first with: superjolt deploy',
+        );
         process.exit(1);
       }
 
       // Find project root
       const projectRoot = findProjectRoot();
       if (!projectRoot) {
-        console.error('Could not find project root');
+        this.logger.error('Could not find project root');
         process.exit(1);
       }
 
@@ -48,11 +52,11 @@ export class EnvPushCommand extends AuthenticatedCommand {
       const envPath = path.join(projectRoot, envFileName);
 
       if (!fs.existsSync(envPath)) {
-        console.error(`File not found: ${envFileName}`);
+        this.logger.error(`File not found: ${envFileName}`);
         process.exit(1);
       }
 
-      console.log(`Reading ${envFileName}...`);
+      this.logger.log(`Reading ${envFileName}...`);
 
       // Read and parse env file
       const content = fs.readFileSync(envPath, 'utf8');
@@ -60,21 +64,23 @@ export class EnvPushCommand extends AuthenticatedCommand {
 
       const varCount = Object.keys(envVars).length;
       if (varCount === 0) {
-        console.log(`No valid environment variables found in ${envFileName}`);
+        this.logger.log(
+          `No valid environment variables found in ${envFileName}`,
+        );
         return;
       }
 
-      console.log(`Setting ${varCount} environment variable(s)...`);
+      this.logger.log(`Setting ${varCount} environment variable(s)...`);
 
       await this.apiService.setEnvVars(config.serviceId, envVars);
-      console.log(
+      this.logger.log(
         `✅ Set ${varCount} environment variable(s) from ${envFileName}`,
       );
-      console.log(
+      this.logger.log(
         '\n⚠️  Note: Run "superjolt deploy" for changes to take effect',
       );
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

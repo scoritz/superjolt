@@ -1,6 +1,7 @@
 import { Command } from 'nest-commander';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedCommand } from './authenticated.command';
 import { readSuperjoltConfig } from '../utils/project';
@@ -17,6 +18,7 @@ export class ServiceRenameCommand extends AuthenticatedCommand {
   constructor(
     protected readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -25,9 +27,13 @@ export class ServiceRenameCommand extends AuthenticatedCommand {
     try {
       // Check if no arguments provided
       if (passedParams.length === 0) {
-        console.error('Error: New name is required');
-        console.log('Usage: superjolt service:rename <serviceId> <newName>');
-        console.log('   or: superjolt rename <newName> (uses .superjolt file)');
+        this.logger.error('Error: New name is required');
+        this.logger.log(
+          'Usage: superjolt service:rename <serviceId> <newName>',
+        );
+        this.logger.log(
+          '   or: superjolt rename <newName> (uses .superjolt file)',
+        );
         process.exit(1);
       }
 
@@ -39,15 +45,19 @@ export class ServiceRenameCommand extends AuthenticatedCommand {
         if (config?.serviceId) {
           serviceId = config.serviceId;
           passedParams[1] = passedParams[0]; // Move the name to the correct position
-          console.log(`Using service ID from .superjolt file: ${serviceId}`);
+          this.logger.log(
+            `Using service ID from .superjolt file: ${serviceId}`,
+          );
         } else {
           // No config file, so we can't determine if the param is service ID or name
-          console.error('Error: Service ID is required');
-          console.log('Usage: superjolt service:rename <serviceId> <newName>');
-          console.log(
+          this.logger.error('Error: Service ID is required');
+          this.logger.log(
+            'Usage: superjolt service:rename <serviceId> <newName>',
+          );
+          this.logger.log(
             '   or: superjolt rename <newName> (uses .superjolt file)',
           );
-          console.log(
+          this.logger.log(
             '\nNo .superjolt file found. Run "superjolt deploy" first or provide a service ID.',
           );
           process.exit(1);
@@ -56,19 +66,27 @@ export class ServiceRenameCommand extends AuthenticatedCommand {
 
       // Validate inputs after parameter adjustment
       if (!serviceId) {
-        console.error('Error: Service ID is required');
-        console.log('Usage: superjolt service:rename <serviceId> <newName>');
-        console.log('   or: superjolt rename <newName> (uses .superjolt file)');
-        console.log(
+        this.logger.error('Error: Service ID is required');
+        this.logger.log(
+          'Usage: superjolt service:rename <serviceId> <newName>',
+        );
+        this.logger.log(
+          '   or: superjolt rename <newName> (uses .superjolt file)',
+        );
+        this.logger.log(
           '\nNo .superjolt file found. Run "superjolt deploy" first or provide a service ID.',
         );
         process.exit(1);
       }
 
       if (!passedParams[1]) {
-        console.error('Error: New name is required');
-        console.log('Usage: superjolt service:rename <serviceId> <newName>');
-        console.log('   or: superjolt rename <newName> (uses .superjolt file)');
+        this.logger.error('Error: New name is required');
+        this.logger.log(
+          'Usage: superjolt service:rename <serviceId> <newName>',
+        );
+        this.logger.log(
+          '   or: superjolt rename <newName> (uses .superjolt file)',
+        );
         process.exit(1);
       }
 
@@ -77,13 +95,13 @@ export class ServiceRenameCommand extends AuthenticatedCommand {
       // Validate name format (similar to npm package names)
       const nameRegex = /^[a-z0-9][a-z0-9-._]*$/;
       if (!nameRegex.test(finalNewName)) {
-        console.error(
+        this.logger.error(
           'Error: Service name must start with a lowercase letter or number, and can only contain lowercase letters, numbers, hyphens, periods, and underscores.',
         );
         process.exit(1);
       }
 
-      console.log(
+      this.logger.log(
         `Renaming service ${chalk.cyan(serviceId)} to ${chalk.cyan(finalNewName)}...`,
       );
 
@@ -92,12 +110,12 @@ export class ServiceRenameCommand extends AuthenticatedCommand {
         finalNewName,
       );
 
-      console.log(chalk.green(`✅ ${response.message}`));
-      console.log(
+      this.logger.log(chalk.green(`✅ ${response.message}`));
+      this.logger.log(
         `Service ${chalk.cyan(serviceId)} renamed to ${chalk.cyan(response.name)}`,
       );
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

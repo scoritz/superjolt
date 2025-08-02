@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from './config.service';
 import { StorageService } from './storage.service';
+import { LoggerService } from './logger.service';
 import { firstValueFrom } from 'rxjs';
 
 const TOKEN_KEY = 'token';
@@ -14,6 +15,7 @@ export class AuthService {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
     private readonly storageService: StorageService,
+    private readonly logger: LoggerService,
   ) {}
 
   async getToken(): Promise<string | null> {
@@ -45,37 +47,37 @@ export class AuthService {
   }
 
   async performOAuthFlow(): Promise<string> {
-    console.log('🔐 Authenticating with Superjolt...\n');
+    this.logger.log('🔐 Authenticating with Superjolt...\n');
 
-    // Generate state for auth flow using dynamic import
-    const { nanoid } = await import('nanoid');
-    const state = nanoid();
+    // Generate state for auth flow using built-in crypto
+    const { randomUUID } = await import('crypto');
+    const state = randomUUID();
 
     // Get auth URL from API
     const authEndpoint = this.configService.getVersionedUrl(
       `auth/github?state=${state}&source=cli`,
     );
 
-    console.log(`Fetching auth URL from: ${authEndpoint}`);
+    this.logger.log(`Fetching auth URL from: ${authEndpoint}`);
 
     const authResponse = await firstValueFrom(
       this.httpService.get(authEndpoint, {
         timeout: 10000, // 10 second timeout
       }),
     );
-    console.log('>>', authResponse.data);
+    this.logger.log('>>', authResponse.data);
     const authUrl = authResponse.data.url;
 
-    console.log('Opening browser for GitHub authentication...');
-    console.log('If the browser does not open, please visit:');
-    console.log(`\n${authUrl}\n`);
+    this.logger.log('Opening browser for GitHub authentication...');
+    this.logger.log('If the browser does not open, please visit:');
+    this.logger.log(`\n${authUrl}\n`);
 
     // Open browser using dynamic import
     const open = (await import('open')).default;
     await open(authUrl);
 
     // Poll for completion
-    console.log('⏳ Waiting for authentication...');
+    this.logger.log('⏳ Waiting for authentication...');
 
     const startTime = Date.now();
     const timeout = 5 * 60 * 1000; // 5 minutes
@@ -93,7 +95,7 @@ export class AuthService {
         if (status === 'completed' && token) {
           // Save token
           await this.setToken(token);
-          console.log('\n✅ Authentication successful!\n');
+          this.logger.log('\n✅ Authentication successful!\n');
           return token;
         } else if (status === 'failed') {
           throw new Error('Authentication failed');

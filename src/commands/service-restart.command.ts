@@ -1,6 +1,7 @@
 import { Command } from 'nest-commander';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { Injectable } from '@nestjs/common';
 import { readSuperjoltConfig } from '../utils/project';
 import { AuthenticatedCommand } from './authenticated.command';
@@ -16,6 +17,7 @@ export class ServiceRestartCommand extends AuthenticatedCommand {
   constructor(
     private readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -29,24 +31,26 @@ export class ServiceRestartCommand extends AuthenticatedCommand {
         const config = readSuperjoltConfig();
         if (config?.serviceId) {
           serviceId = config.serviceId;
-          console.log(`Using service ID from .superjolt file: ${serviceId}`);
+          this.logger.log(
+            `Using service ID from .superjolt file: ${serviceId}`,
+          );
         } else {
-          console.error('Error: Service ID is required');
-          console.log('Usage: superjolt service:restart <serviceId>');
-          console.log('   or: superjolt restart <serviceId>');
-          console.log(
+          this.logger.error('Error: Service ID is required');
+          this.logger.log('Usage: superjolt service:restart <serviceId>');
+          this.logger.log('   or: superjolt restart <serviceId>');
+          this.logger.log(
             '\nNo .superjolt file found. Run "superjolt deploy" first or provide a service ID.',
           );
           process.exit(1);
         }
       }
 
-      console.log(`Restarting service: ${serviceId}...`);
+      this.logger.log(`Restarting service: ${serviceId}...`);
 
       const response = await this.apiService.restartService(serviceId);
-      console.log(`✅ ${response.message}`);
+      this.logger.log(`✅ ${response.message}`);
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

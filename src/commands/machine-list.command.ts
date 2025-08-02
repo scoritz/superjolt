@@ -2,6 +2,7 @@ import { Command } from 'nest-commander';
 import { Injectable } from '@nestjs/common';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { AuthenticatedCommand } from './authenticated.command';
 import {
   createResourceTable,
@@ -21,13 +22,14 @@ export class MachineListCommand extends AuthenticatedCommand {
   constructor(
     protected readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
 
   protected async execute(): Promise<void> {
     try {
-      console.log(chalk.dim('Fetching machines...\n'));
+      this.logger.log(chalk.dim('Fetching machines...\n'));
 
       const [response, currentUser] = await Promise.all([
         this.apiService.listMachines(),
@@ -35,9 +37,9 @@ export class MachineListCommand extends AuthenticatedCommand {
       ]);
 
       if (response.machines.length === 0) {
-        console.log(chalk.yellow('No machines found.'));
-        console.log(chalk.dim('\nCreate your first machine with:'));
-        console.log(chalk.cyan('  superjolt machine:create'));
+        this.logger.log(chalk.yellow('No machines found.'));
+        this.logger.log(chalk.dim('\nCreate your first machine with:'));
+        this.logger.log(chalk.cyan('  superjolt machine:create'));
         return;
       }
 
@@ -104,7 +106,7 @@ export class MachineListCommand extends AuthenticatedCommand {
         ]);
       });
 
-      console.log(table.toString());
+      this.logger.log(table.toString());
 
       // Summary
       const runningCount = response.machines.filter(
@@ -134,17 +136,17 @@ export class MachineListCommand extends AuthenticatedCommand {
         }
       }
 
-      console.log(summary);
+      this.logger.log(summary);
 
       if (currentUser?.lastUsedMachineId) {
-        console.log(
+        this.logger.log(
           chalk.dim(
             `\nDefault machine: ${chalk.blue(currentUser.lastUsedMachineId)}`,
           ),
         );
       }
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

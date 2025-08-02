@@ -1,6 +1,7 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { Injectable } from '@nestjs/common';
 import { UpdateService } from '../services/update.service';
+import { LoggerService } from '../services/logger.service';
 
 interface UpdateOptions {
   check?: boolean;
@@ -12,7 +13,10 @@ interface UpdateOptions {
   description: 'Update Superjolt CLI to the latest version',
 })
 export class UpdateCommand extends CommandRunner {
-  constructor(private readonly updateService: UpdateService) {
+  constructor(
+    private readonly updateService: UpdateService,
+    private readonly logger: LoggerService,
+  ) {
     super();
   }
 
@@ -26,7 +30,7 @@ export class UpdateCommand extends CommandRunner {
         await this.updateService.manualUpdate();
       }
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

@@ -41,7 +41,8 @@
     "node": ">=18.0.0"
   },
   "bin": {
-    "superjolt": "dist/main.js"
+    "superjolt": "dist/main.js",
+    "superjolt-mcp": "dist/mcp/mcp-main.js"
   },
   "files": [
     "dist/**/*.js",
@@ -52,9 +53,9 @@
   ],
   "scripts": {
     "build": "nest build",
-    "postbuild": "chmod +x dist/main.js 2>/dev/null || true",
+    "postbuild": "chmod +x dist/main.js dist/mcp/mcp-main.js 2>/dev/null || true",
     "prepublishOnly": "npm run build",
-    "postinstall": "chmod +x dist/main.js 2>/dev/null || true",
+    "postinstall": "chmod +x dist/main.js dist/mcp/mcp-main.js 2>/dev/null || true",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "node ./scripts/dev-watch.js",
@@ -70,6 +71,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.5",
     "@nestjs/axios": "^4.0.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
@@ -84,13 +86,13 @@
     "eventsource": "^4.0.0",
     "form-data": "^4.0.3",
     "keytar": "^7.9.0",
-    "nanoid": "^5.1.5",
     "nest-commander": "^3.17.0",
     "open": "^10.1.2",
     "package-json": "^10.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "semver": "^7.7.2"
+    "semver": "^7.7.2",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

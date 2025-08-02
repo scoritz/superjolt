@@ -30,6 +30,7 @@ import { ConfigService } from './services/config.service';
 import { AuthService } from './services/auth.service';
 import { StorageService } from './services/storage.service';
 import { UpdateService } from './services/update.service';
+import { LoggerService } from './services/logger.service';
 import { UpdateCheckHook } from './hooks/update-check.hook';
 
 @Module({
@@ -70,6 +71,7 @@ import { UpdateCheckHook } from './hooks/update-check.hook';
     AuthService,
     StorageService,
     UpdateService,
+    LoggerService,
     UpdateCheckHook,
   ],
 })

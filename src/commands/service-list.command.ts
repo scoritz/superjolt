@@ -1,6 +1,7 @@
 import { Command, Option } from 'nest-commander';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedCommand } from './authenticated.command';
 import {
@@ -25,6 +26,7 @@ export class ServiceListCommand extends AuthenticatedCommand {
   constructor(
     protected readonly apiService: ApiService,
     protected readonly authService: AuthService,
+    protected readonly logger: LoggerService,
   ) {
     super();
   }
@@ -37,18 +39,18 @@ export class ServiceListCommand extends AuthenticatedCommand {
       const machineId = options.machineId || passedParams[0];
 
       if (machineId) {
-        console.log(
+        this.logger.log(
           chalk.dim(`Fetching services for machine: ${machineId}...`),
         );
       } else {
-        console.log(chalk.dim('Fetching services...'));
+        this.logger.log(chalk.dim('Fetching services...'));
       }
 
       const response = await this.apiService.listServices(machineId);
 
       // Check if machine selection is needed
       if (response.needsSelection) {
-        console.log(
+        this.logger.log(
           chalk.cyan('\n🖥️  Multiple machines available. Please select one:'),
         );
         const machines = response.availableMachines;
@@ -70,7 +72,7 @@ export class ServiceListCommand extends AuthenticatedCommand {
           ]);
         });
 
-        console.log(selectionTable.toString());
+        this.logger.log(selectionTable.toString());
 
         // Prompt for selection
         const readline = require('readline');
@@ -90,12 +92,12 @@ export class ServiceListCommand extends AuthenticatedCommand {
         });
 
         if (selection < 1 || selection > machines.length) {
-          console.error(chalk.red('Invalid selection'));
+          this.logger.error(chalk.red('Invalid selection'));
           process.exit(1);
         }
 
         const selectedMachine = machines[selection - 1];
-        console.log(
+        this.logger.log(
           chalk.dim(
             `\nFetching services for machine: ${selectedMachine.id}...`,
           ),
@@ -109,14 +111,16 @@ export class ServiceListCommand extends AuthenticatedCommand {
       }
 
       if (response.total === 0) {
-        console.log(chalk.yellow('\nNo services found for this machine.'));
-        console.log(chalk.dim('\nDeploy a service with:'));
-        console.log(chalk.cyan('  superjolt deploy'));
+        this.logger.log(chalk.yellow('\nNo services found for this machine.'));
+        this.logger.log(chalk.dim('\nDeploy a service with:'));
+        this.logger.log(chalk.cyan('  superjolt deploy'));
         return;
       }
 
       const displayMachineId = response.machineId || machineId;
-      console.log(chalk.cyan(`\nServices for machine ${displayMachineId}:`));
+      this.logger.log(
+        chalk.cyan(`\nServices for machine ${displayMachineId}:`),
+      );
 
       // Create the table
       const table = createResourceTable(
@@ -170,7 +174,7 @@ export class ServiceListCommand extends AuthenticatedCommand {
         ]);
       });
 
-      console.log(table.toString());
+      this.logger.log(table.toString());
 
       // Summary
       const statusCounts = response.services.reduce(
@@ -200,9 +204,9 @@ export class ServiceListCommand extends AuthenticatedCommand {
         summary += chalk.dim(` (${statusParts.join(', ')})`);
       }
 
-      console.log(summary);
+      this.logger.log(summary);
     } catch (error: any) {
-      console.error(`\n${error.message}`);
+      this.logger.error(`\n${error.message}`);
       process.exit(1);
     }
   }

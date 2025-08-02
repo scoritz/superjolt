@@ -1,6 +1,7 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { Injectable } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
+import { LoggerService } from '../services/logger.service';
 
 @Injectable()
 @Command({
@@ -8,7 +9,10 @@ import { AuthService } from '../services/auth.service';
   description: 'Log out from Superjolt',
 })
 export class LogoutCommand extends CommandRunner {
-  constructor(private readonly authService: AuthService) {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly logger: LoggerService,
+  ) {
     super();
   }
 
@@ -17,14 +21,14 @@ export class LogoutCommand extends CommandRunner {
       const token = await this.authService.getToken();
 
       if (!token) {
-        console.log('You are not logged in.');
+        this.logger.log('You are not logged in.');
         return;
       }
 
       await this.authService.deleteToken();
-      console.log('✅ Successfully logged out from Superjolt.');
+      this.logger.log('✅ Successfully logged out from Superjolt.');
     } catch (error: any) {
-      console.error(`\nError logging out: ${error.message}`);
+      this.logger.error(`\nError logging out: ${error.message}`);
       process.exit(1);
     }
   }
