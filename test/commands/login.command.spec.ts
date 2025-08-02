@@ -116,9 +116,7 @@ describe('LoginCommand', () => {
         new Error(errorMessage),
       );
 
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const processExitSpy = jest
         .spyOn(process, 'exit')
         .mockImplementation(() => {

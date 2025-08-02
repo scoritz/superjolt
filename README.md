@@ -81,6 +81,7 @@ That's it! The CLI will guide you through authentication and deployment.
 - `superjolt service:start <service-id>` - Start a service
 - `superjolt service:stop <service-id>` - Stop a service
 - `superjolt service:restart <service-id>` - Restart a service
+- `superjolt service:rename <service-id> <new-name>` - Rename a service (alias: `rename`)
 - `superjolt service:delete <service-id>` - Delete a service
 
 ### Environment Variables

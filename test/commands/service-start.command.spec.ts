@@ -102,9 +102,7 @@ describe('ServiceStartCommand', () => {
     it('should show error when no service ID and no .superjolt file', async () => {
       (projectUtils.readSuperjoltConfig as jest.Mock).mockReturnValue(null);
 
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
       const processExitSpy = jest
         .spyOn(process, 'exit')
@@ -132,9 +130,7 @@ describe('ServiceStartCommand', () => {
       const errorMessage = 'Service not found';
       mockApiService.startService.mockRejectedValue(new Error(errorMessage));
 
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const processExitSpy = jest
         .spyOn(process, 'exit')
         .mockImplementation(() => {

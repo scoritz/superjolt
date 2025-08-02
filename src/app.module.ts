@@ -10,6 +10,7 @@ import { ServiceStartCommand } from './commands/service-start.command';
 import { ServiceStopCommand } from './commands/service-stop.command';
 import { ServiceRestartCommand } from './commands/service-restart.command';
 import { ServiceDeleteCommand } from './commands/service-delete.command';
+import { ServiceRenameCommand } from './commands/service-rename.command';
 import { EnvSetCommand } from './commands/env-set.command';
 import { EnvGetCommand } from './commands/env-get.command';
 import { EnvListCommand } from './commands/env-list.command';
@@ -48,6 +49,7 @@ import { UpdateCheckHook } from './hooks/update-check.hook';
     ServiceStopCommand,
     ServiceRestartCommand,
     ServiceDeleteCommand,
+    ServiceRenameCommand,
     EnvSetCommand,
     EnvGetCommand,
     EnvListCommand,

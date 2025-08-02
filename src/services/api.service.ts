@@ -82,6 +82,17 @@ export class ApiService {
     );
   }
 
+  async renameService(
+    serviceId: string,
+    newName: string,
+  ): Promise<{ message: string; serviceId: string; name: string }> {
+    return this.request<{ message: string; serviceId: string; name: string }>(
+      'PUT',
+      `/service/${encodeURIComponent(serviceId)}/rename`,
+      { name: newName },
+    );
+  }
+
   async deleteService(serviceId: string): Promise<{ message: string }> {
     return this.request<{ message: string }>(
       'DELETE',

@@ -82,9 +82,7 @@ describe('MachineCreateCommand', () => {
       mockApiService.createMachine.mockRejectedValue(new Error(errorMessage));
 
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const processExitSpy = jest
         .spyOn(process, 'exit')
         .mockImplementation(() => {

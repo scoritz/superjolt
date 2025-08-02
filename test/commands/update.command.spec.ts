@@ -54,13 +54,9 @@ describe('UpdateCommand', () => {
 
     it('should handle errors from manualUpdate', async () => {
       const errorMessage = 'Update failed';
-      mockUpdateService.manualUpdate.mockRejectedValue(
-        new Error(errorMessage),
-      );
+      mockUpdateService.manualUpdate.mockRejectedValue(new Error(errorMessage));
 
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const processExitSpy = jest
         .spyOn(process, 'exit')
         .mockImplementation(() => {
@@ -82,9 +78,7 @@ describe('UpdateCommand', () => {
         new Error(errorMessage),
       );
 
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const processExitSpy = jest
         .spyOn(process, 'exit')
         .mockImplementation(() => {

@@ -73,9 +73,7 @@ describe('LogoutCommand', () => {
       mockAuthService.getToken.mockResolvedValue('test-token');
       mockAuthService.deleteToken.mockRejectedValue(new Error(errorMessage));
 
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const processExitSpy = jest
         .spyOn(process, 'exit')
         .mockImplementation(() => {
@@ -97,9 +95,7 @@ describe('LogoutCommand', () => {
       const errorMessage = 'Failed to get token';
       mockAuthService.getToken.mockRejectedValue(new Error(errorMessage));
 
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const processExitSpy = jest
         .spyOn(process, 'exit')
         .mockImplementation(() => {

@@ -86,30 +86,25 @@ describe('MeCommand', () => {
 
       expect(mockApiService.getCurrentUser).toHaveBeenCalledTimes(1);
       expect(tableUtils.createInfoTable).toHaveBeenCalled();
-      
+
       // The first push call has two items: name and email
       expect(mockTable.push).toHaveBeenCalledTimes(4); // 1st call (name, email), github, avatar, user id
-      
+
       // Check the first call had both name and email
-      expect(mockTable.push).toHaveBeenNthCalledWith(1, 
+      expect(mockTable.push).toHaveBeenNthCalledWith(
+        1,
         ['Name', 'Test User'],
-        ['Email', 'test@example.com']
+        ['Email', 'test@example.com'],
       );
-      
+
       // Check other calls
-      expect(mockTable.push).toHaveBeenCalledWith([
-        'GitHub',
-        '@testuser',
-      ]);
+      expect(mockTable.push).toHaveBeenCalledWith(['GitHub', '@testuser']);
       expect(mockTable.push).toHaveBeenCalledWith([
         'Avatar',
         'https://example.com/avatar.jpg',
       ]);
-      expect(mockTable.push).toHaveBeenCalledWith([
-        'User ID',
-        'user-123',
-      ]);
-      
+      expect(mockTable.push).toHaveBeenCalledWith(['User ID', 'user-123']);
+
       expect(consoleLogSpy).toHaveBeenCalled();
 
       consoleLogSpy.mockRestore();
@@ -203,9 +198,7 @@ describe('MeCommand', () => {
       const errorMessage = 'API Error';
       mockApiService.getCurrentUser.mockRejectedValue(new Error(errorMessage));
 
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const processExitSpy = jest
         .spyOn(process, 'exit')
         .mockImplementation(() => {

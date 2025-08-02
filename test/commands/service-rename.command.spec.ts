@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { EnvGetCommand } from '../../src/commands/env-get.command';
+import { ServiceRenameCommand } from '../../src/commands/service-rename.command';
 import { ApiService } from '../../src/services/api.service';
 import { AuthService } from '../../src/services/auth.service';
 import * as projectUtils from '../../src/utils/project';
 
 jest.mock('../../src/utils/project');
 
-describe('EnvGetCommand', () => {
-  let command: EnvGetCommand;
+describe('ServiceRenameCommand', () => {
+  let command: ServiceRenameCommand;
   let mockApiService: {
-    getEnvVar: jest.Mock;
+    renameService: jest.Mock;
   };
   let mockAuthService: {
     getToken: jest.Mock;
@@ -18,7 +18,7 @@ describe('EnvGetCommand', () => {
 
   beforeEach(async () => {
     mockApiService = {
-      getEnvVar: jest.fn(),
+      renameService: jest.fn(),
     };
 
     mockAuthService = {
@@ -28,7 +28,7 @@ describe('EnvGetCommand', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        EnvGetCommand,
+        ServiceRenameCommand,
         {
           provide: ApiService,
           useValue: mockApiService,
@@ -40,15 +40,10 @@ describe('EnvGetCommand', () => {
       ],
     }).compile();
 
-    command = module.get<EnvGetCommand>(EnvGetCommand);
+    command = module.get<ServiceRenameCommand>(ServiceRenameCommand);
 
     // Mock successful authentication
     mockAuthService.getToken.mockResolvedValue('test-token');
-
-    // Default mock for readSuperjoltConfig
-    (projectUtils.readSuperjoltConfig as jest.Mock).mockReturnValue({
-      serviceId: 'service-123',
-    });
   });
 
   afterEach(() => {
@@ -60,22 +55,63 @@ describe('EnvGetCommand', () => {
   });
 
   describe('execute', () => {
-    it('should get environment variable successfully', async () => {
-      const key = 'NODE_ENV';
-      const value = 'production';
-      mockApiService.getEnvVar.mockResolvedValue({ [key]: value });
+    it('should rename service with provided service ID and name', async () => {
+      const serviceId = 'service-123';
+      const newName = 'new-service-name';
+      mockApiService.renameService.mockResolvedValue({
+        message: 'Service renamed successfully',
+        serviceId,
+        name: newName,
+      });
 
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
-      await command.run([key]);
+      await command.run([serviceId, newName]);
 
-      expect(mockApiService.getEnvVar).toHaveBeenCalledWith('service-123', key);
-      expect(consoleLogSpy).toHaveBeenCalledWith(`${key}=${value}`);
+      expect(mockApiService.renameService).toHaveBeenCalledWith(
+        serviceId,
+        newName,
+      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`Renaming service`),
+      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('✅ Service renamed successfully'),
+      );
 
       consoleLogSpy.mockRestore();
     });
 
-    it('should show error when key is not provided', async () => {
+    it('should use service ID from .superjolt file when only name provided', async () => {
+      const serviceId = 'config-service-456';
+      const newName = 'new-name';
+      (projectUtils.readSuperjoltConfig as jest.Mock).mockReturnValue({
+        serviceId,
+      });
+
+      mockApiService.renameService.mockResolvedValue({
+        message: 'Service renamed successfully',
+        serviceId,
+        name: newName,
+      });
+
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+
+      await command.run([newName]);
+
+      expect(projectUtils.readSuperjoltConfig).toHaveBeenCalled();
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        `Using service ID from .superjolt file: ${serviceId}`,
+      );
+      expect(mockApiService.renameService).toHaveBeenCalledWith(
+        serviceId,
+        newName,
+      );
+
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should show error when no arguments provided', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
       const processExitSpy = jest
@@ -87,10 +123,7 @@ describe('EnvGetCommand', () => {
       await expect(command.run([])).rejects.toThrow('process.exit');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error: Environment variable key is required',
-      );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        'Usage: superjolt env:get KEY',
+        'Error: New name is required',
       );
       expect(processExitSpy).toHaveBeenCalledWith(1);
 
@@ -99,32 +132,35 @@ describe('EnvGetCommand', () => {
       processExitSpy.mockRestore();
     });
 
-    it('should show error when no service is configured', async () => {
+    it('should show error when only one parameter and no .superjolt file', async () => {
       (projectUtils.readSuperjoltConfig as jest.Mock).mockReturnValue(null);
 
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
       const processExitSpy = jest
         .spyOn(process, 'exit')
         .mockImplementation(() => {
           throw new Error('process.exit');
         });
 
-      await expect(command.run(['NODE_ENV'])).rejects.toThrow('process.exit');
+      await expect(command.run(['new-name'])).rejects.toThrow('process.exit');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'No service found. Deploy first with: superjolt deploy',
+        'Error: Service ID is required',
+      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('No .superjolt file found'),
       );
       expect(processExitSpy).toHaveBeenCalledWith(1);
 
       consoleErrorSpy.mockRestore();
+      consoleLogSpy.mockRestore();
       processExitSpy.mockRestore();
     });
 
-    it('should handle environment variable not found', async () => {
-      const key = 'MISSING_VAR';
-      mockApiService.getEnvVar.mockRejectedValue(
-        new Error('Environment variable not found'),
-      );
+    it('should validate name format', async () => {
+      const serviceId = 'service-123';
+      const invalidName = 'Invalid-Name-123'; // Contains uppercase
 
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const processExitSpy = jest
@@ -133,10 +169,14 @@ describe('EnvGetCommand', () => {
           throw new Error('process.exit');
         });
 
-      await expect(command.run([key])).rejects.toThrow('process.exit');
+      await expect(command.run([serviceId, invalidName])).rejects.toThrow(
+        'process.exit',
+      );
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        `Environment variable '${key}' not found`,
+        expect.stringContaining(
+          'Service name must start with a lowercase letter',
+        ),
       );
       expect(processExitSpy).toHaveBeenCalledWith(1);
 
@@ -145,8 +185,10 @@ describe('EnvGetCommand', () => {
     });
 
     it('should handle API errors', async () => {
-      const errorMessage = 'API Error';
-      mockApiService.getEnvVar.mockRejectedValue(new Error(errorMessage));
+      const serviceId = 'service-123';
+      const newName = 'new-name';
+      const errorMessage = 'Service not found';
+      mockApiService.renameService.mockRejectedValue(new Error(errorMessage));
 
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const processExitSpy = jest
@@ -155,7 +197,9 @@ describe('EnvGetCommand', () => {
           throw new Error('process.exit');
         });
 
-      await expect(command.run(['NODE_ENV'])).rejects.toThrow('process.exit');
+      await expect(command.run([serviceId, newName])).rejects.toThrow(
+        'process.exit',
+      );
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(`\n${errorMessage}`);
       expect(processExitSpy).toHaveBeenCalledWith(1);
