@@ -10,12 +10,178 @@
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
   [![Discord](https://img.shields.io/badge/Discord-Join%20Us-7289DA)](https://superjolt.com/discord)
   
-  Official command-line interface for [Superjolt](https://superjolt.com) - The fastest way to deploy JavaScript applications.
+  **🤖 AI-Powered Deployment Platform with MCP Support**
+  
+  Official command-line interface for [Superjolt](https://superjolt.com) - Deploy and manage JavaScript applications with AI assistance.
 </div>
 
 > ⚡ **Beta Release**: We're actively improving Superjolt based on your feedback. Join our [Discord](https://superjolt.com/discord) to share your experience!
 > 
 > During beta, the CLI will automatically check for critical updates to ensure compatibility with our evolving API.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Quick Start](#quick-start)
+- [🤖 AI Integration (MCP)](#-ai-integration-mcp)
+- [Installation](#installation)
+- [Commands](#commands)
+  - [Authentication](#authentication)
+  - [Deployment](#deployment)
+  - [Machine Management](#machine-management)
+  - [Service Management](#service-management)
+  - [Environment Variables](#environment-variables)
+  - [Logs](#logs)
+  - [Other Commands](#other-commands)
+- [Configuration](#configuration)
+- [Examples](#examples)
+- [Web Dashboard](#web-dashboard)
+- [Support](#support)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Overview
+
+Superjolt CLI is the fastest way to deploy JavaScript applications to the cloud. With integrated AI support through Model Context Protocol (MCP), you can manage your entire infrastructure using natural language with Claude Desktop.
+
+**Key Features:**
+- 🚀 One-command deployment: `npx superjolt deploy`
+- 🤖 AI-powered infrastructure management via MCP
+- 🔧 Full service lifecycle management
+- 🔐 Secure environment variable handling
+- 📊 Real-time logs and monitoring
+- 🌐 Automatic SSL and custom domains
+
+## Quick Start
+
+From your JavaScript framework project folder, run:
+
+```bash
+npx superjolt deploy
+```
+
+That's it! The CLI will guide you through authentication and deployment.
+
+## 🤖 AI Integration (MCP)
+
+Superjolt is one of the first deployment platforms with native Model Context Protocol (MCP) support, allowing you to manage your entire infrastructure through AI assistants like Claude Desktop.
+
+### Why MCP?
+
+- **Natural Language Control**: Manage deployments using conversational commands
+- **Context-Aware Operations**: AI understands your infrastructure state
+- **Automated Workflows**: Let AI handle complex deployment sequences
+- **Error Resolution**: Get intelligent help with deployment issues
+
+### Setup MCP
+
+1. **Install Superjolt CLI** (includes MCP server):
+   ```bash
+   npm install -g superjolt
+   ```
+
+2. **Authenticate with Superjolt**:
+   ```bash
+   superjolt login
+   ```
+
+3. **Add to Claude Desktop configuration**:
+   - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+   - **Linux**: `~/.config/claude/claude_desktop_config.json`
+
+   ```json
+   {
+     "mcpServers": {
+       "superjolt": {
+         "command": "superjolt-mcp",
+         "args": []
+       }
+     }
+   }
+   ```
+
+4. **Restart Claude Desktop**
+
+### MCP Capabilities
+
+Once configured, you can use natural language to:
+
+**Infrastructure Management:**
+- "Create a new production machine"
+- "List all my running services"
+- "Show me services that are stopped"
+- "Delete all test machines"
+
+**Deployment Operations:**
+- "Restart my API service"
+- "Stop the staging environment"
+- "Show logs for the web service"
+
+**Configuration:**
+- "Set DATABASE_URL for my backend"
+- "List all environment variables"
+- "Update API keys for production"
+
+### Available MCP Tools
+
+<details>
+<summary>View all MCP tools</summary>
+
+#### Authentication
+- `check_auth` - Check if authenticated with Superjolt
+- `get_current_user` - Get current user information
+
+#### Machine Management  
+- `list_machines` - List all machines
+- `create_machine` - Create a new machine
+- `delete_machine` - Delete a machine
+- `rename_machine` - Rename a machine
+- `set_default_machine` - Set the default machine for deployments
+
+#### Service Management
+- `list_services` - List services (optionally filtered by machine)
+- `start_service` - Start a service
+- `stop_service` - Stop a service
+- `restart_service` - Restart a service
+- `delete_service` - Delete a service  
+- `rename_service` - Rename a service
+
+#### Environment Variables
+- `list_env_vars` - List all environment variables for a service
+- `set_env_vars` - Set one or more environment variables
+- `get_env_var` - Get a specific environment variable
+- `delete_env_var` - Delete an environment variable
+- `push_env_file` - Push a .env file to a service
+
+#### Logs
+- `get_logs` - Get logs for a service
+
+</details>
+
+### MCP Requirements & Troubleshooting
+
+- **Node.js 16 or later is required** (The MCP server uses modern JavaScript features)
+- If you see `Unexpected token '??='` errors, Claude Desktop is using an old Node.js version
+
+**Solutions:**
+1. Set your default Node version and restart Claude Desktop:
+   ```bash
+   nvm alias default 16  # or higher
+   # Completely quit and restart Claude Desktop
+   ```
+
+2. Or use explicit paths in your Claude Desktop config:
+   ```json
+   {
+     "mcpServers": {
+       "superjolt": {
+         "command": "/path/to/node16+/bin/node",
+         "args": ["/path/to/node16+/bin/superjolt-mcp"]
+       }
+     }
+   }
+   ```
 
 ## Installation
 
@@ -40,16 +206,6 @@ Or using yarn:
 ```bash
 yarn global add superjolt
 ```
-
-## Quick Start
-
-From your JavaScript framework project folder, run:
-
-```bash
-npx superjolt deploy
-```
-
-That's it! The CLI will guide you through authentication and deployment.
 
 ## Commands
 
@@ -108,8 +264,7 @@ That's it! The CLI will guide you through authentication and deployment.
 
 The CLI stores authentication tokens securely using your system's keychain (keytar). If keychain access is unavailable, tokens are stored in `~/.config/superjolt/token`.
 
-
-## Project Configuration
+### Project Configuration
 
 The CLI automatically creates a `.superjolt` file in your project root after the first deployment. This file tracks:
 
@@ -121,11 +276,14 @@ The CLI automatically creates a `.superjolt` file in your project root after the
 
 This allows the CLI to determine whether to update an existing deployment or create a new one.
 
-## Deployment Ignore File (.superjoltignore)
+### Deployment Ignore File (.superjoltignore)
 
 You can create a `.superjoltignore` file in your project root to exclude specific files and directories from deployment. This file follows the same syntax as `.gitignore`.
 
-### Default Exclusions
+<details>
+<summary>View default exclusions and examples</summary>
+
+#### Default Exclusions
 
 The following patterns are always excluded from deployments:
 - `node_modules/`
@@ -143,7 +301,7 @@ The following patterns are always excluded from deployments:
 - `temp/`
 - `.superjolt`
 
-### Custom Exclusions
+#### Custom Exclusions
 
 Create a `.superjoltignore` file to add your own exclusion patterns:
 
@@ -169,7 +327,9 @@ videos/
 
 The patterns in `.superjoltignore` are combined with the default exclusions, so you don't need to repeat them.
 
-## Port Configuration
+</details>
+
+### Port Configuration
 
 When your application is deployed on Superjolt, the server automatically provides the port number through the `PORT` environment variable. Your application should listen on this port to receive incoming requests.
 
@@ -227,6 +387,21 @@ superjolt machine:list
 superjolt machine:use happy-blue-fox
 ```
 
+### AI-Powered Management with Claude
+
+Once MCP is configured, you can use natural language:
+
+```
+You: "Show me all my running services"
+Claude: [Lists all services with their status]
+
+You: "Restart the API service and check its logs"
+Claude: [Restarts service and shows recent logs]
+
+You: "Set up environment variables for my database connection"
+Claude: [Helps configure DATABASE_URL and related variables]
+```
+
 ## Web Dashboard
 
 Manage your deployments through our web interface at **[users.superjolt.com](https://users.superjolt.com)**:
@@ -243,135 +418,6 @@ Manage your deployments through our web interface at **[users.superjolt.com](htt
 - **Issues**: https://github.com/scoritz/superjolt/issues
 - **Discord**: https://superjolt.com/discord
 - **Email**: support@superjolt.com
-
-## MCP (Model Context Protocol) Server
-
-Superjolt includes an integrated MCP server that allows AI assistants like Claude to interact with your deployments directly.
-
-### Requirements
-
-- **Node.js 16 or later is required** (The MCP server uses modern JavaScript features not available in older versions)
-- If you have multiple Node versions installed, ensure Node 16+ is the default or remove older versions
-
-### Setup
-
-1. Install Superjolt CLI (includes MCP server):
-   ```bash
-   npm install -g superjolt
-   ```
-
-2. Authenticate with Superjolt:
-   ```bash
-   superjolt login
-   ```
-
-3. Add to Claude Desktop configuration:
-   - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-   - **Linux**: `~/.config/claude/claude_desktop_config.json`
-
-   ```json
-   {
-     "mcpServers": {
-       "superjolt": {
-         "command": "superjolt-mcp",
-         "args": []
-       }
-     }
-   }
-   ```
-
-4. Restart Claude Desktop
-
-### Available MCP Tools
-
-#### Authentication
-- `check_auth` - Check if authenticated with Superjolt
-- `get_current_user` - Get current user information
-
-#### Machine Management  
-- `list_machines` - List all machines
-- `create_machine` - Create a new machine
-- `delete_machine` - Delete a machine
-- `rename_machine` - Rename a machine
-- `set_default_machine` - Set the default machine for deployments
-
-#### Service Management
-- `list_services` - List services (optionally filtered by machine)
-- `start_service` - Start a service
-- `stop_service` - Stop a service
-- `restart_service` - Restart a service
-- `delete_service` - Delete a service  
-- `rename_service` - Rename a service
-
-#### Environment Variables
-- `list_env_vars` - List all environment variables for a service
-- `set_env_vars` - Set one or more environment variables
-- `get_env_var` - Get a specific environment variable
-- `delete_env_var` - Delete an environment variable
-- `push_env_file` - Push a .env file to a service
-
-#### Logs
-- `get_logs` - Get logs for a service
-
-### Troubleshooting
-
-**Node.js version errors**: If you see `Unexpected token '??='` errors, Claude Desktop is using an old Node.js version. This often happens when:
-- Claude Desktop was launched before you switched Node versions with nvm
-- Your system's default `node` is older than v16
-
-Solutions:
-1. Set your default Node version and restart Claude Desktop:
-   ```bash
-   nvm alias default 16  # or higher
-   # Completely quit and restart Claude Desktop
-   ```
-
-2. Or use explicit paths in your Claude Desktop config:
-   ```json
-   {
-     "mcpServers": {
-       "superjolt": {
-         "command": "/path/to/node16+/bin/node",
-         "args": ["/path/to/node16+/bin/superjolt-mcp"]
-       }
-     }
-   }
-   ```
-
-### Example Usage
-
-Once configured, you can ask Claude to:
-
-**Machine Management:**
-- "Create a new machine"
-- "List all my machines"
-- "Set machine happy-blue-fox as default"
-- "Rename machine old-name to production-server"
-- "Delete machine test-machine"
-
-**Service Management:**
-- "List all my services"
-- "Show services on machine production-server"
-- "Start service my-api"
-- "Stop the database service"
-- "Restart my web app"
-- "Rename service old-api to new-api"
-
-**Environment Variables:**
-- "List environment variables for my-service"
-- "Set DATABASE_URL for my API service"
-- "Get the API_KEY value for my service"
-- "Delete the OLD_VAR environment variable"
-- "Push my .env file to the service"
-
-**Logs:**
-- "Show me the logs for my API service"
-- "Get the last 50 log lines for my-app"
-
-**Authentication:**
-- "Check if I'm authenticated with Superjolt"
-- "Show my Superjolt user info"
 
 ## Contributing
 

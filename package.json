@@ -1,7 +1,7 @@
 {
   "name": "superjolt",
   "version": "0.1.0-beta.9",
-  "description": "Official CLI for Superjolt (Beta) - Deploy JavaScript apps with ease",
+  "description": "AI-powered deployment platform with MCP support - Deploy JavaScript apps using natural language with Claude Desktop",
   "author": "Superjolt Team",
   "private": false,
   "license": "MIT",
@@ -14,6 +14,10 @@
     "url": "https://github.com/scoritz/superjolt/issues"
   },
   "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude-desktop",
+    "ai-deployment",
     "superjolt",
     "cli",
     "paas",
@@ -35,7 +39,9 @@
     "full-stack",
     "devops",
     "continuous-deployment",
-    "zero-config"
+    "zero-config",
+    "ai-ops",
+    "infrastructure-as-code"
   ],
   "engines": {
     "node": ">=18.0.0"
