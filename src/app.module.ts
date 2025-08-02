@@ -5,6 +5,7 @@ import { MachineCreateCommand } from './commands/machine-create.command';
 import { MachineListCommand } from './commands/machine-list.command';
 import { MachineDeleteCommand } from './commands/machine-delete.command';
 import { MachineUseCommand } from './commands/machine-use.command';
+import { MachineRenameCommand } from './commands/machine-rename.command';
 import { ServiceListCommand } from './commands/service-list.command';
 import { ServiceStartCommand } from './commands/service-start.command';
 import { ServiceStopCommand } from './commands/service-stop.command';
@@ -44,6 +45,7 @@ import { UpdateCheckHook } from './hooks/update-check.hook';
     MachineListCommand,
     MachineDeleteCommand,
     MachineUseCommand,
+    MachineRenameCommand,
     ServiceListCommand,
     ServiceStartCommand,
     ServiceStopCommand,

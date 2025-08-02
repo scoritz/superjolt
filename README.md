@@ -74,6 +74,7 @@ That's it! The CLI will guide you through authentication and deployment.
 - `superjolt machine:list` - List all your machines
 - `superjolt machine:delete <machine-id>` - Delete a machine
 - `superjolt machine:use <machine-id>` - Set the default machine for deployments
+- `superjolt machine:rename [machine-id] <new-name>` - Rename a machine (uses default machine if ID omitted)
 
 ### Service Management
 

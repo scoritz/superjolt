@@ -31,6 +31,17 @@ export class ApiService {
     await this.request<void>('DELETE', `/machine/${machineId}`);
   }
 
+  async renameMachine(
+    machineId: string,
+    newName: string,
+  ): Promise<{ message: string; machineId: string; name: string }> {
+    return this.request<{ message: string; machineId: string; name: string }>(
+      'PUT',
+      `/machine/${encodeURIComponent(machineId)}/rename`,
+      { name: newName },
+    );
+  }
+
   async listServices(machineId?: string): Promise<any> {
     const params = new URLSearchParams();
     if (machineId) {
