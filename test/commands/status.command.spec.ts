@@ -36,6 +36,7 @@ describe('StatusCommand', () => {
           provide: AuthService,
           useValue: {
             getToken: jest.fn(),
+            getTokenSource: jest.fn(),
           },
         },
         {
@@ -84,7 +85,7 @@ describe('StatusCommand', () => {
       (storageService.listKeys as jest.Mock).mockReturnValue([]);
       (storageService.getJson as jest.Mock).mockResolvedValue(null);
 
-      await command.run();
+      await command.run([], {});
 
       // Check that the output contains expected information
       const output = consoleLogSpy.mock.calls.map((call) => call[0]).join('\n');
@@ -104,7 +105,7 @@ describe('StatusCommand', () => {
       (storageService.listKeys as jest.Mock).mockReturnValue([]);
       (storageService.getJson as jest.Mock).mockResolvedValue(null);
 
-      await command.run();
+      await command.run([], {});
 
       const output = consoleLogSpy.mock.calls.map((call) => call[0]).join('\n');
       expect(output).toContain('API Configuration');
@@ -120,10 +121,11 @@ describe('StatusCommand', () => {
         'https://api.superjolt.com',
       );
       (authService.getToken as jest.Mock).mockResolvedValue(mockToken);
+      (authService.getTokenSource as jest.Mock).mockResolvedValue('keychain');
       (storageService.listKeys as jest.Mock).mockReturnValue(['token']);
       (storageService.getJson as jest.Mock).mockResolvedValue(null);
 
-      await command.run();
+      await command.run([], {});
 
       const output = consoleLogSpy.mock.calls.map((call) => call[0]).join('\n');
       expect(output).toContain('Authentication');
@@ -143,7 +145,7 @@ describe('StatusCommand', () => {
       (storageService.listKeys as jest.Mock).mockReturnValue([]);
       (storageService.getJson as jest.Mock).mockResolvedValue(null);
 
-      await command.run();
+      await command.run([], {});
 
       const output = consoleLogSpy.mock.calls.map((call) => call[0]).join('\n');
       expect(output).toContain('Not authenticated');
@@ -169,7 +171,7 @@ describe('StatusCommand', () => {
         currentVersion: '0.1.0-beta.1',
       });
 
-      await command.run();
+      await command.run([], {});
 
       const output = consoleLogSpy.mock.calls.map((call) => call[0]).join('\n');
       expect(output).toContain('Local Storage');

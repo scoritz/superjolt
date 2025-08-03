@@ -35,6 +35,7 @@
   - [Logs](#logs)
   - [Other Commands](#other-commands)
 - [Configuration](#configuration)
+- [CI/CD Integration](#cicd-integration)
 - [Examples](#examples)
 - [Web Dashboard](#web-dashboard)
 - [Support](#support)
@@ -108,6 +109,11 @@ Superjolt is one of the first deployment platforms with native Model Context Pro
 
 Once configured, you can use natural language to:
 
+**Authentication & CI/CD Setup:**
+- "Get my authentication token for CI/CD"
+- "Show me how to set up GitHub Actions"
+- "Check if I'm authenticated"
+
 **Infrastructure Management:**
 - "Create a new production machine"
 - "List all my running services"
@@ -138,6 +144,7 @@ Once configured, you can use natural language to:
 #### Authentication
 - `check_auth` - Check if authenticated with Superjolt
 - `get_current_user` - Get current user information
+- `get_token` - Get authentication token for CI/CD use
 
 #### Machine Management  
 - `list_machines` - List all machines
@@ -227,6 +234,8 @@ yarn global add superjolt
 - `superjolt login` - Authenticate with your Superjolt account
 - `superjolt logout` - Log out from your account
 - `superjolt me` - Display current user information
+- `superjolt token` - Display your authentication token for CI/CD use
+  - `--show` - Show the full token (for exporting)
 
 ### Deployment
 
@@ -280,6 +289,7 @@ yarn global add superjolt
 - `superjolt update` - Update CLI to the latest version
 - `superjolt update --check` - Check for updates without installing
 - `superjolt status` - Display CLI configuration, version, and stored data (aliases: `info`, `config`)
+  - `--show-token` - Show full authentication token
 
 ## Configuration
 
@@ -363,6 +373,97 @@ app.listen(port, () => {
 ```
 
 This is similar to other PaaS platforms like Heroku - you don't choose the port, the platform assigns it dynamically. Always use `process.env.PORT` when available, with a fallback for local development.
+
+## CI/CD Integration
+
+Superjolt CLI supports authentication via environment variables for seamless CI/CD integration.
+
+### Setting Up CI/CD Authentication
+
+1. **Get your authentication token:**
+   ```bash
+   superjolt token --show
+   ```
+
+2. **Set the token as a secret in your CI/CD platform:**
+   - **GitHub Actions**: Add as a repository secret named `SUPERJOLT_TOKEN`
+   - **GitLab CI**: Add as a protected CI/CD variable
+   - **CircleCI**: Add as an environment variable in project settings
+   - **Other platforms**: Set `SUPERJOLT_TOKEN` as a secure environment variable
+
+3. **Use in your CI/CD pipeline:**
+
+#### GitHub Actions Example
+
+```yaml
+name: Deploy to Superjolt
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Deploy to Superjolt
+        env:
+          SUPERJOLT_TOKEN: ${{ secrets.SUPERJOLT_TOKEN }}
+        run: npx superjolt deploy
+```
+
+#### GitLab CI Example
+
+```yaml
+deploy:
+  stage: deploy
+  image: node:18
+  script:
+    - npm ci
+    - npx superjolt deploy
+  only:
+    - main
+  variables:
+    SUPERJOLT_TOKEN: $SUPERJOLT_TOKEN
+```
+
+#### Generic Script Example
+
+```bash
+#!/bin/bash
+export SUPERJOLT_TOKEN="your-token-here"
+npx superjolt deploy
+```
+
+### Security Best Practices
+
+- **Never commit tokens to version control**
+- Store tokens as encrypted secrets in your CI/CD platform
+- Use different tokens for different environments (staging, production)
+- Rotate tokens regularly
+- Tokens provide full access to your Superjolt account - handle with care
+
+### Environment Variable Authentication
+
+When `SUPERJOLT_TOKEN` is set, the CLI will:
+- Skip the browser-based login flow
+- Use the token for all API requests
+- Work in headless environments (CI/CD, containers)
+
+You can verify the token source with:
+```bash
+superjolt status
+```
 
 ## Examples
 

@@ -1,4 +1,4 @@
-import { Command, CommandRunner } from 'nest-commander';
+import { Command, CommandRunner, Option } from 'nest-commander';
 import { Injectable } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { LoggerService } from '../services/logger.service';
@@ -28,7 +28,10 @@ export class StatusCommand extends CommandRunner {
     super();
   }
 
-  async run(): Promise<void> {
+  async run(
+    _inputs: string[],
+    options: { showToken?: boolean },
+  ): Promise<void> {
     this.logger.log(chalk.cyan('\n━━━ Superjolt CLI Status ━━━\n'));
 
     // Version Info
@@ -75,34 +78,37 @@ export class StatusCommand extends CommandRunner {
     const token = await this.authService.getToken();
 
     if (token) {
-      // Show partial token for security
-      const maskedToken = `${token.substring(0, 8)}...${token.substring(token.length - 8)}`;
+      // Show partial or full token based on option
+      const displayToken = options.showToken
+        ? chalk.yellow(token)
+        : chalk.dim(
+            `${token.substring(0, 8)}...${token.substring(token.length - 8)}`,
+          );
+
       authTable.push(
         [chalk.bold('Status'), chalk.green('Authenticated')],
-        [chalk.bold('Token'), chalk.dim(maskedToken)],
+        [chalk.bold('Token'), displayToken],
       );
 
-      // Check if using keytar or file
-      try {
-        const keytar = require('keytar');
-        const keytarToken = await keytar.getPassword('superjolt-cli', 'token');
-        if (keytarToken) {
-          authTable.push([
-            chalk.bold('Storage'),
-            chalk.green('System Keychain (secure)'),
-          ]);
-        } else {
-          authTable.push([
-            chalk.bold('Storage'),
-            chalk.yellow('File (fallback)'),
-          ]);
-        }
-      } catch {
-        authTable.push([
-          chalk.bold('Storage'),
-          chalk.yellow('File (keytar unavailable)'),
-        ]);
+      // Get token source
+      const tokenSource = await this.authService.getTokenSource();
+      let storageInfo = '';
+
+      switch (tokenSource) {
+        case 'env':
+          storageInfo = chalk.cyan('Environment Variable (SUPERJOLT_TOKEN)');
+          break;
+        case 'keychain':
+          storageInfo = chalk.green('System Keychain (secure)');
+          break;
+        case 'file':
+          storageInfo = chalk.yellow('File (fallback)');
+          break;
+        default:
+          storageInfo = chalk.red('Unknown');
       }
+
+      authTable.push([chalk.bold('Source'), storageInfo]);
     } else {
       authTable.push(
         [chalk.bold('Status'), chalk.red('Not authenticated')],
@@ -200,6 +206,7 @@ export class StatusCommand extends CommandRunner {
     const envTable = createInfoTable();
     const envVars = [
       'SUPERJOLT_API_URL',
+      'SUPERJOLT_TOKEN',
       'SUPERJOLT_NO_UPDATE_CHECK',
       'CI',
       'CONTINUOUS_INTEGRATION',
@@ -208,7 +215,14 @@ export class StatusCommand extends CommandRunner {
     let hasEnvVars = false;
     for (const envVar of envVars) {
       if (process.env[envVar]) {
-        envTable.push([chalk.bold(envVar), chalk.green(process.env[envVar])]);
+        let value = process.env[envVar];
+        // Mask the token for security
+        if (envVar === 'SUPERJOLT_TOKEN' && value) {
+          value = options.showToken
+            ? value
+            : `${value.substring(0, 8)}...${value.substring(value.length - 8)}`;
+        }
+        envTable.push([chalk.bold(envVar), chalk.green(value)]);
         hasEnvVars = true;
       }
     }
@@ -265,5 +279,13 @@ export class StatusCommand extends CommandRunner {
     this.logger.log(updateTable.toString());
 
     this.logger.log(chalk.cyan('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'));
+  }
+
+  @Option({
+    flags: '--show-token',
+    description: 'Show the full authentication token',
+  })
+  parseShowToken(): boolean {
+    return true;
   }
 }

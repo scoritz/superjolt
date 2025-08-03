@@ -52,6 +52,15 @@ export class McpService {
             required: [],
           },
         },
+        {
+          name: 'get_token',
+          description: 'Get the authentication token for CI/CD use',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+            required: [],
+          },
+        },
         // Machine tools
         {
           name: 'list_machines',
@@ -408,7 +417,11 @@ export class McpService {
       const toolName = request.params.name;
 
       // Route to the appropriate handler based on tool name
-      if (toolName === 'check_auth' || toolName === 'get_current_user') {
+      if (
+        toolName === 'check_auth' ||
+        toolName === 'get_current_user' ||
+        toolName === 'get_token'
+      ) {
         return authHandler(request);
       }
 
@@ -562,6 +575,55 @@ export class McpService {
               {
                 type: 'text',
                 text: `Error getting user info: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
+      if (request.params.name === 'get_token') {
+        try {
+          const token = await this.authService.getToken();
+          if (!token) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: 'Not authenticated. Run "superjolt login" to authenticate first.',
+                },
+              ],
+            };
+          }
+
+          const source = await this.authService.getTokenSource();
+          let sourceInfo = '';
+          switch (source) {
+            case 'env':
+              sourceInfo = ' (from environment variable)';
+              break;
+            case 'keychain':
+              sourceInfo = ' (from system keychain)';
+              break;
+            case 'file':
+              sourceInfo = ' (from file storage)';
+              break;
+          }
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Authentication token${sourceInfo}:\n${token}\n\nTo use in CI/CD:\nexport SUPERJOLT_TOKEN="${token}"`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Error retrieving token: ${error instanceof Error ? error.message : 'Unknown error'}`,
               },
             ],
             isError: true,

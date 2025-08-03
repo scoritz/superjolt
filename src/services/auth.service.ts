@@ -24,6 +24,12 @@ export class AuthService {
       return this.tokenCache;
     }
 
+    // Check environment variable
+    if (process.env.SUPERJOLT_TOKEN) {
+      this.tokenCache = process.env.SUPERJOLT_TOKEN;
+      return this.tokenCache;
+    }
+
     // Get from storage (will try keytar first, then file)
     const token = await this.storageService.get(TOKEN_KEY, { secure: true });
     if (token) {
@@ -44,6 +50,32 @@ export class AuthService {
     this.tokenCache = null;
     // Delete from storage (will handle both keytar and file)
     await this.storageService.delete(TOKEN_KEY, { secure: true });
+  }
+
+  async getTokenSource(): Promise<'env' | 'keychain' | 'file' | null> {
+    // Check environment variable first
+    if (process.env.SUPERJOLT_TOKEN) {
+      return 'env';
+    }
+
+    // Check storage
+    const token = await this.storageService.get(TOKEN_KEY, { secure: true });
+    if (!token) {
+      return null;
+    }
+
+    // Check if using keytar or file
+    try {
+      const keytar = require('keytar');
+      const keytarToken = await keytar.getPassword('superjolt-cli', 'token');
+      if (keytarToken) {
+        return 'keychain';
+      }
+    } catch {
+      // Keytar not available
+    }
+
+    return 'file';
   }
 
   async performOAuthFlow(): Promise<string> {

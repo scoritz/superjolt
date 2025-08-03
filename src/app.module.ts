@@ -25,6 +25,7 @@ import { LoginCommand } from './commands/login.command';
 import { LogoutCommand } from './commands/logout.command';
 import { UpdateCommand } from './commands/update.command';
 import { StatusCommand } from './commands/status.command';
+import { TokenCommand } from './commands/token.command';
 import { DomainAddCommand } from './commands/domain-add.command';
 import { DomainListCommand } from './commands/domain-list.command';
 import { DomainRemoveCommand } from './commands/domain-remove.command';
@@ -70,6 +71,7 @@ import { UpdateCheckHook } from './hooks/update-check.hook';
     LogoutCommand,
     UpdateCommand,
     StatusCommand,
+    TokenCommand,
     DomainAddCommand,
     DomainListCommand,
     DomainRemoveCommand,
