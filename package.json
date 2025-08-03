@@ -1,6 +1,6 @@
 {
   "name": "superjolt",
-  "version": "0.1.0-beta.10",
+  "version": "0.1.0-beta.11",
   "description": "AI-powered deployment platform with MCP support - Deploy JavaScript apps using natural language with Claude Desktop",
   "author": "Superjolt Team",
   "private": false,
