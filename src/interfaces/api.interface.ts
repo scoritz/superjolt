@@ -70,3 +70,55 @@ export interface ICurrentUser {
   lastUsedMachineId: string | null;
   tenant: ITenant;
 }
+
+export interface ICustomDomain {
+  id: string;
+  domain: string;
+  serviceId: string;
+  tenantId: string;
+  status: 'pending_validation' | 'active' | 'failed' | 'expired';
+  cloudflareCustomHostnameId?: string;
+  sslStatus: 'pending_validation' | 'active' | 'expired';
+  validationMethod: string;
+  validationTarget?: string;
+  isPrimary: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ICreateCustomDomainRequest {
+  domain: string;
+  serviceId: string;
+  isPrimary?: boolean;
+}
+
+export interface ICreateCustomDomainResponse {
+  id: string;
+  domain: string;
+  serviceId: string;
+  status: string;
+  sslStatus: string;
+  validationMethod: string;
+  validationTarget?: string;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
+export interface IListCustomDomainsResponse {
+  domains: ICustomDomain[];
+  total: number;
+}
+
+export interface ICustomDomainStatus {
+  domain: string;
+  status: 'pending_validation' | 'active' | 'failed' | 'expired';
+  sslStatus: 'pending_validation' | 'active' | 'expired';
+  validationMethod: string;
+  validationTarget?: string;
+  isPrimary: boolean;
+}
+
+export interface IDeleteCustomDomainResponse {
+  success: boolean;
+  message: string;
+}

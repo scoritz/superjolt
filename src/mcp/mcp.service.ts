@@ -327,6 +327,71 @@ export class McpService {
             required: ['serviceId'],
           },
         },
+        // Custom domain tools
+        {
+          name: 'add_custom_domain',
+          description: 'Add a custom domain to a service',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              domain: {
+                type: 'string',
+                description: 'The custom domain (e.g., app.example.com)',
+              },
+              serviceId: {
+                type: 'string',
+                description: 'Service ID',
+              },
+              primary: {
+                type: 'boolean',
+                description: 'Set as primary domain (default: false)',
+              },
+            },
+            required: ['domain', 'serviceId'],
+          },
+        },
+        {
+          name: 'list_custom_domains',
+          description: 'List custom domains for a service or all services',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              serviceId: {
+                type: 'string',
+                description: 'Service ID (optional, lists all if not provided)',
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'remove_custom_domain',
+          description: 'Remove a custom domain',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              domain: {
+                type: 'string',
+                description: 'The custom domain to remove',
+              },
+            },
+            required: ['domain'],
+          },
+        },
+        {
+          name: 'get_custom_domain_status',
+          description: 'Get the status of a custom domain',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              domain: {
+                type: 'string',
+                description: 'The custom domain to check',
+              },
+            },
+            required: ['domain'],
+          },
+        },
       ],
     }));
 
@@ -336,6 +401,7 @@ export class McpService {
     const machineHandler = this.createMachineToolsHandler();
     const envHandler = this.createEnvToolsHandler();
     const logHandler = this.createLogToolsHandler();
+    const domainHandler = this.createDomainToolsHandler();
 
     // Register the main CallToolRequestSchema handler that routes to all tools
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -385,6 +451,17 @@ export class McpService {
 
       if (toolName === 'get_logs') {
         return logHandler(request);
+      }
+
+      if (
+        [
+          'add_custom_domain',
+          'list_custom_domains',
+          'remove_custom_domain',
+          'get_custom_domain_status',
+        ].includes(toolName)
+      ) {
+        return domainHandler(request);
       }
 
       // Unknown tool
@@ -1100,6 +1177,171 @@ export class McpService {
 
       // This should not be reached as routing is handled in main handler
       throw new Error(`Unexpected tool in log handler: ${request.params.name}`);
+    };
+  }
+
+  private createDomainToolsHandler() {
+    const AddCustomDomainSchema = z.object({
+      domain: z.string(),
+      serviceId: z.string(),
+      primary: z.boolean().optional(),
+    });
+
+    const ListCustomDomainsSchema = z.object({
+      serviceId: z.string().optional(),
+    });
+
+    const RemoveCustomDomainSchema = z.object({
+      domain: z.string(),
+    });
+
+    const GetCustomDomainStatusSchema = z.object({
+      domain: z.string(),
+    });
+
+    return async (request: any) => {
+      if (request.params.name === 'add_custom_domain') {
+        try {
+          const args = AddCustomDomainSchema.parse(request.params.arguments);
+
+          const response = await this.apiService.createCustomDomain({
+            domain: args.domain,
+            serviceId: args.serviceId,
+            isPrimary: args.primary,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Custom domain ${response.domain} added to service ${response.serviceId}\nStatus: ${response.status}\nSSL Status: ${response.sslStatus}${response.validationTarget ? `\nValidation URL: ${response.validationTarget}` : ''}`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Error adding custom domain: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
+      if (request.params.name === 'list_custom_domains') {
+        try {
+          const args = ListCustomDomainsSchema.parse(request.params.arguments);
+
+          const response = await this.apiService.listCustomDomains(
+            args.serviceId,
+          );
+
+          if (response.domains.length === 0) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: args.serviceId
+                    ? `No custom domains found for service ${args.serviceId}`
+                    : 'No custom domains found',
+                },
+              ],
+            };
+          }
+
+          const domainList = response.domains
+            .map(
+              (d) =>
+                `- ${d.domain} (${d.serviceId})${d.isPrimary ? ' [PRIMARY]' : ''} - Status: ${d.status}, SSL: ${d.sslStatus}`,
+            )
+            .join('\n');
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Custom domains (${response.total}):\n${domainList}`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Error listing custom domains: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
+      if (request.params.name === 'remove_custom_domain') {
+        try {
+          const args = RemoveCustomDomainSchema.parse(request.params.arguments);
+
+          await this.apiService.deleteCustomDomain(args.domain);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Custom domain ${args.domain} has been successfully removed`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Error removing custom domain: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
+      if (request.params.name === 'get_custom_domain_status') {
+        try {
+          const args = GetCustomDomainStatusSchema.parse(
+            request.params.arguments,
+          );
+
+          const response = await this.apiService.getCustomDomainStatus(
+            args.domain,
+          );
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Domain: ${response.domain}\nStatus: ${response.status}\nSSL Status: ${response.sslStatus}${response.isPrimary ? '\nPrimary: Yes' : ''}${response.validationTarget ? `\nValidation URL: ${response.validationTarget}` : ''}`,
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Error getting domain status: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
+      // This should not be reached as routing is handled in main handler
+      throw new Error(
+        `Unexpected tool in domain handler: ${request.params.name}`,
+      );
     };
   }
 }

@@ -30,6 +30,7 @@
   - [Deployment](#deployment)
   - [Machine Management](#machine-management)
   - [Service Management](#service-management)
+  - [Custom Domains](#custom-domains)
   - [Environment Variables](#environment-variables)
   - [Logs](#logs)
   - [Other Commands](#other-commands)
@@ -123,6 +124,12 @@ Once configured, you can use natural language to:
 - "List all environment variables"
 - "Update API keys for production"
 
+**Custom Domains:**
+- "Add app.example.com to my web service"
+- "List all custom domains"
+- "Check validation status for my domain"
+- "Remove old.example.com"
+
 ### Available MCP Tools
 
 <details>
@@ -153,6 +160,12 @@ Once configured, you can use natural language to:
 - `get_env_var` - Get a specific environment variable
 - `delete_env_var` - Delete an environment variable
 - `push_env_file` - Push a .env file to a service
+
+#### Custom Domains
+- `add_custom_domain` - Add a custom domain to a service
+- `list_custom_domains` - List custom domains for a service or all services
+- `remove_custom_domain` - Remove a custom domain
+- `get_custom_domain_status` - Get the status of a custom domain
 
 #### Logs
 - `get_logs` - Get logs for a service
@@ -240,6 +253,14 @@ yarn global add superjolt
 - `superjolt service:restart <service-id>` - Restart a service
 - `superjolt service:rename <service-id> <new-name>` - Rename a service (alias: `rename`)
 - `superjolt service:delete <service-id>` - Delete a service
+
+### Custom Domains
+
+- `superjolt domain:add <domain> [service-id]` - Add a custom domain to a service (uses .superjolt file if service ID omitted)
+  - `-p, --primary` - Set as primary domain for the service
+- `superjolt domain:list [service-id]` - List custom domains (alias: `domains`)
+- `superjolt domain:status <domain>` - Check domain validation status
+- `superjolt domain:remove <domain>` - Remove a custom domain (alias: `domain:delete`)
 
 ### Environment Variables
 
@@ -372,6 +393,28 @@ superjolt env:push
 
 # List all variables
 superjolt env:list
+```
+
+### Managing Custom Domains
+
+```bash
+# Add a custom domain (uses service ID from .superjolt file)
+superjolt domain:add app.example.com
+
+# Add to a specific service
+superjolt domain:add app.example.com happy-blue-fox
+
+# Add as primary domain
+superjolt domain:add www.example.com --primary
+
+# List all domains
+superjolt domain:list
+
+# Check domain status
+superjolt domain:status app.example.com
+
+# Remove a domain
+superjolt domain:remove app.example.com
 ```
 
 ### Working with Machines

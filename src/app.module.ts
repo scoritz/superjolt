@@ -25,6 +25,10 @@ import { LoginCommand } from './commands/login.command';
 import { LogoutCommand } from './commands/logout.command';
 import { UpdateCommand } from './commands/update.command';
 import { StatusCommand } from './commands/status.command';
+import { DomainAddCommand } from './commands/domain-add.command';
+import { DomainListCommand } from './commands/domain-list.command';
+import { DomainRemoveCommand } from './commands/domain-remove.command';
+import { DomainStatusCommand } from './commands/domain-status.command';
 import { ApiService } from './services/api.service';
 import { ConfigService } from './services/config.service';
 import { AuthService } from './services/auth.service';
@@ -66,6 +70,10 @@ import { UpdateCheckHook } from './hooks/update-check.hook';
     LogoutCommand,
     UpdateCommand,
     StatusCommand,
+    DomainAddCommand,
+    DomainListCommand,
+    DomainRemoveCommand,
+    DomainStatusCommand,
     ApiService,
     ConfigService,
     AuthService,

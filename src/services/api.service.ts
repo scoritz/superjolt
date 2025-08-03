@@ -10,6 +10,11 @@ import {
   IListMachinesResponse,
   IGetLogsResponse,
   ICurrentUser,
+  ICreateCustomDomainRequest,
+  ICreateCustomDomainResponse,
+  IListCustomDomainsResponse,
+  ICustomDomainStatus,
+  IDeleteCustomDomainResponse,
 } from '../interfaces/api.interface';
 
 @Injectable()
@@ -168,6 +173,47 @@ export class ApiService {
     return this.request<{ message: string }>(
       'DELETE',
       `/service/${encodeURIComponent(serviceId)}/env/${encodeURIComponent(key)}`,
+    );
+  }
+
+  // Custom Domain methods
+  async createCustomDomain(
+    data: ICreateCustomDomainRequest,
+  ): Promise<ICreateCustomDomainResponse> {
+    return this.request<ICreateCustomDomainResponse>(
+      'POST',
+      '/custom-domains',
+      data,
+    );
+  }
+
+  async listCustomDomains(
+    serviceId?: string,
+  ): Promise<IListCustomDomainsResponse> {
+    const params = new URLSearchParams();
+    if (serviceId) {
+      params.append('serviceId', serviceId);
+    }
+    const query = params.toString();
+    return this.request<IListCustomDomainsResponse>(
+      'GET',
+      `/custom-domains${query ? `?${query}` : ''}`,
+    );
+  }
+
+  async getCustomDomainStatus(domain: string): Promise<ICustomDomainStatus> {
+    return this.request<ICustomDomainStatus>(
+      'GET',
+      `/custom-domains/${encodeURIComponent(domain)}/status`,
+    );
+  }
+
+  async deleteCustomDomain(
+    domain: string,
+  ): Promise<IDeleteCustomDomainResponse> {
+    return this.request<IDeleteCustomDomainResponse>(
+      'DELETE',
+      `/custom-domains/${encodeURIComponent(domain)}`,
     );
   }
 
